@@ -26,7 +26,7 @@ public class UserRepositoryInMemoryImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkUserForPresence(id);
+        checkForPresenceById(id);
         return users.get(id);
     }
 
@@ -52,7 +52,7 @@ public class UserRepositoryInMemoryImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkUserForPresence(id);
+        checkForPresenceById(id);
         if (user.getEmail() != null &&
                 users.values().stream()
                 .filter(savedUser -> !savedUser.getId().equals(id))
@@ -74,7 +74,7 @@ public class UserRepositoryInMemoryImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkUserForPresence(id);
+        checkForPresenceById(id);
         User deletedUser = users.remove(id);
         log.info("User with id {} has been deleted", id);
         return deletedUser;
@@ -86,7 +86,8 @@ public class UserRepositoryInMemoryImpl implements UserRepository {
         log.info("All users has been deleted");
     }
 
-    private void checkUserForPresence(Long id) {
+    @Override
+    public void checkForPresenceById(Long id) {
         if (!users.containsKey(id)) {
             throw new ObjectNotFoundException(String.format("User with id = %s not found", id));
         }

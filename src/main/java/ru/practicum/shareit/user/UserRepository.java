@@ -14,4 +14,6 @@ public interface UserRepository {
     User deleteById(Long id);
 
     void deleteAll();
+
+    void checkForPresenceById(Long id);
 }

@@ -38,11 +38,11 @@ public class UserValidator {
     }
 
     public void validateForUpdating(User user) {
-        List<FieldViolation> fieldViolations = new ArrayList<>();
-
         if (user.getName() == null && user.getEmail() == null) {
             throw new EmptyObjectException("Updated user must have at least one not null field");
         }
+
+        List<FieldViolation> fieldViolations = new ArrayList<>();
 
         if (user.getName() != null && user.getName().isBlank()) {
             fieldViolations.add(new FieldViolation("User.name", "must not be empty"));
