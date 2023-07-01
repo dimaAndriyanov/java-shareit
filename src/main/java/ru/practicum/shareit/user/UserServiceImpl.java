@@ -3,7 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.item.ItemRepository;
+import ru.practicum.shareit.item.ItemService;
 
 import java.util.List;
 
@@ -12,8 +12,7 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
     @Qualifier("userRepositoryInMemoryImpl")
     private final UserRepository userRepository;
-    @Qualifier("itemRepositoryInMemoryImpl")
-    private final ItemRepository itemRepository;
+    private final ItemService itemService;
 
     @Override
     public List<User> getAllUsers() {
@@ -22,6 +21,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long id) {
+        userRepository.checkForPresenceById(id);
         return userRepository.getById(id);
     }
 
@@ -32,18 +32,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateUser(User user, Long id) {
+        userRepository.checkForPresenceById(id);
         return userRepository.update(user, id);
     }
 
     @Override
     public User deleteUserById(Long id) {
-        itemRepository.deleteAllByOwnerId(id);
+        userRepository.checkForPresenceById(id);
+        itemService.deleteAllByOwnerId(id);
         return userRepository.deleteById(id);
     }
 
     @Override
     public void deleteAllUsers() {
-        itemRepository.deleteAll();
+        itemService.deleteAllItems();
         userRepository.deleteAll();
     }
 }

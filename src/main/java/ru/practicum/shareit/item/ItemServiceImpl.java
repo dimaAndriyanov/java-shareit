@@ -50,6 +50,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getItemById(Long id) {
+        itemRepository.checkForPresenceById(id);
         return itemMapper.toItemDto(itemRepository.getById(id));
     }
 
@@ -57,40 +58,52 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto createItem(ItemDto itemDto, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
         Item savedItem = itemRepository.create(itemMapper.toItem(itemDto, userRepository.getById(ownerId)));
-        if (savedItem.getAvailable()) {
-            itemCatalogue.put(savedItem.getId(), new CataloguedItem(savedItem));
-        }
+        updateItemCatalogue(savedItem);
         return itemMapper.toItemDto(savedItem);
     }
 
     @Override
     public ItemDto updateItem(ItemDto itemDto, Long id, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
+        itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not update someone else's item");
         Item updatedItem = itemRepository.update(itemMapper.toItem(itemDto, userRepository.getById(ownerId)), id);
-        if (updatedItem.getAvailable()) {
-            itemCatalogue.put(updatedItem.getId(), new CataloguedItem(updatedItem));
-        } else {
-            itemCatalogue.remove(updatedItem.getId());
-        }
+        updateItemCatalogue(updatedItem);
         return itemMapper.toItemDto(updatedItem);
     }
 
     @Override
     public ItemDto deleteItemById(Long id, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
+        itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not delete someone else's item");
-        return itemMapper.toItemDto(itemRepository.deleteById(id));
+        Item deletedItem = itemRepository.deleteById(id);
+        itemCatalogue.remove(deletedItem.getId());
+        return itemMapper.toItemDto(deletedItem);
     }
 
     @Override
     public void deleteAllItems() {
         itemRepository.deleteAll();
+        itemCatalogue.clear();
+    }
+
+    @Override
+    public void deleteAllByOwnerId(Long ownerId) {
+        userRepository.checkForPresenceById(ownerId);
+        List<Long> deletedItemsIds = itemRepository.deleteAllByOwnerId(ownerId);
+        for(Long id : deletedItemsIds) {
+            itemCatalogue.remove(id);
+        }
     }
 
     private void checkForDataAccessRights(Long itemId, Long ownerId, String message) {
         if (!itemRepository.getById(itemId).getOwner().getId().equals(ownerId)) {
             throw new DataAccessException(message);
         }
+    }
+
+    private void updateItemCatalogue(Item item) {
+        itemCatalogue.compute(item.getId(), (k, v) -> item.getAvailable() ? new CataloguedItem(item) : null);
     }
 }

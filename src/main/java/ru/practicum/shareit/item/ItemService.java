@@ -20,4 +20,6 @@ public interface ItemService {
     ItemDto deleteItemById(Long id, Long ownerId);
 
     void deleteAllItems();
+
+    void deleteAllByOwnerId(Long ownerId);
 }

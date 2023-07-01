@@ -19,9 +19,11 @@ public interface ItemRepository {
 
     Item deleteById(Long id);
 
+    void deleteByIdList(List<Long> idList);
+
     void deleteAll();
 
     void checkForPresenceById(Long id);
 
-    void deleteAllByOwnerId(Long ownerId);
+    List<Long> deleteAllByOwnerId(Long ownerId);
 }

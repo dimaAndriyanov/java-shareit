@@ -45,7 +45,6 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkForPresenceById(id);
         return items.get(id);
     }
 
@@ -68,7 +67,6 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkForPresenceById(id);
         Item updatedItem = new Item(
                 item.getName() != null ? item.getName() : items.get(id).getName(),
                 item.getDescription() != null ? item.getDescription() : items.get(id).getDescription(),
@@ -86,10 +84,17 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        checkForPresenceById(id);
         Item deletedItem = items.remove(id);
         log.info("Item with id {} has been deleted", id);
         return deletedItem;
+    }
+
+    @Override
+    public void deleteByIdList(List<Long> idList) {
+        if (idList == null) {
+            throw new NullPointerException("Id list must not be null");
+        }
+        idList.forEach(this::deleteById);
     }
 
     @Override
@@ -100,20 +105,19 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
 
     @Override
     public void checkForPresenceById(Long id) {
+        if (id == null) {
+            throw new NullPointerException("Id must not be null");
+        }
         if (!items.containsKey(id)) {
             throw new ObjectNotFoundException(String.format("Item with id = %s not found", id));
         }
     }
 
     @Override
-    public void deleteAllByOwnerId(Long ownerId) {
-        List<Long> idsToDelete = items.entrySet().stream()
-                .filter(entry -> entry.getValue().getOwner().getId().equals(ownerId))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        for (Long id : idsToDelete) {
-            items.remove(id);
-        }
+    public List<Long> deleteAllByOwnerId(Long ownerId) {
+        List<Long> idsToDelete = getAllByOwnerId(ownerId).stream().map(Item::getId).collect(Collectors.toList());
+        deleteByIdList(idsToDelete);
+        return idsToDelete;
     }
 
     private Long getNextId() {

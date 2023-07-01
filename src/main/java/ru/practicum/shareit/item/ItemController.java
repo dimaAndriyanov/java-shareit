@@ -40,6 +40,7 @@ public class ItemController {
     public ItemDto updateItemById(@RequestBody ItemDto itemDto,
                                   @PathVariable Long id,
                                   @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        itemValidator.validateForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);
     }
 
