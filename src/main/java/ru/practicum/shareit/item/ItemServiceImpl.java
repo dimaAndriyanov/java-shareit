@@ -92,7 +92,7 @@ public class ItemServiceImpl implements ItemService {
     public void deleteAllByOwnerId(Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
         List<Long> deletedItemsIds = itemRepository.deleteAllByOwnerId(ownerId);
-        for(Long id : deletedItemsIds) {
+        for (Long id : deletedItemsIds) {
             itemCatalogue.remove(id);
         }
     }
