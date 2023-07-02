@@ -37,7 +37,12 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (idList == null) {
             throw new NullPointerException("Id list must not be null");
         }
-        return idList.stream().map(this::getById).collect(Collectors.toList());
+        return idList.stream()
+                .map(id -> {
+                    checkForPresenceById(id);
+                    return getById(id);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override

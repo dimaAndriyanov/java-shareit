@@ -47,4 +47,10 @@ class UserRepositoryInMemoryImplTest extends UserRepositoryTest {
     void deleteAll() {
         super.deleteAll();
     }
+
+    @Test
+    @Override
+    void checkForPresence() {
+        super.checkForPresence();
+    }
 }

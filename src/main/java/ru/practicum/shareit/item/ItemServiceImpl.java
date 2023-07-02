@@ -37,7 +37,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchItems(String query) {
-        if (query.isEmpty()) {
+        if (query.isBlank()) {
             return List.of();
         }
         List<Long> idList = itemCatalogue.entrySet().stream()

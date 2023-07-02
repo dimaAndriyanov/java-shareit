@@ -2,7 +2,6 @@ package ru.practicum.shareit.user;
 
 import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import ru.practicum.shareit.exception.EmailIsAlreadyInUseException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 
@@ -28,7 +27,6 @@ abstract class UserRepositoryTest {
         );
     }
 
-    @Test
     void getAll() {
         List<User> savedUsers = userRepository.getAll();
 
@@ -43,7 +41,6 @@ abstract class UserRepositoryTest {
         assertEquals(new HashSet<>(addedUsers), new HashSet<>(savedUsers));
     }
 
-    @Test
     void getById() {
         List<User> addedUsers = createThreeUsers();
 
@@ -51,14 +48,9 @@ abstract class UserRepositoryTest {
                 () -> userRepository.getById(null));
         assertEquals("Id must not be null", nullPointerException.getMessage());
 
-        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> userRepository.getById(9999L));
-        assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
-
         assertEquals(addedUsers.get(1), userRepository.getById(addedUsers.get(1).getId()));
     }
 
-    @Test
     void create() {
         NullPointerException nullPointerException = assertThrows(NullPointerException.class,
                 () -> userRepository.create(null));
@@ -72,10 +64,10 @@ abstract class UserRepositoryTest {
         assertEquals("Email big_boss@mail.ru is already in use", emailIsAlreadyInUseException.getMessage());
 
         User newUser = userRepository.create(new User("Maria", "big.boss@mail.ru"));
+        assertNotNull(userRepository.getById(newUser.getId()));
         assertEquals(newUser, userRepository.getById(newUser.getId()));
     }
 
-    @Test
     void update() {
         List<User> addedUsers = createThreeUsers();
 
@@ -90,6 +82,7 @@ abstract class UserRepositoryTest {
         User userWithEmailAlreadyInUse = new User("Katya", "my.email@mail.com");
         EmailIsAlreadyInUseException emailIsAlreadyInUseException = assertThrows(EmailIsAlreadyInUseException.class,
                 () -> userRepository.update(userWithEmailAlreadyInUse, addedUsers.get(1).getId()));
+        assertEquals("Email my.email@mail.com is already in use", emailIsAlreadyInUseException.getMessage());
 
         User dmitriyWithUpdatedEmail =
                 userRepository.update(new User(null, "my.new.email@mail.com"), addedUsers.get(0).getId());
@@ -110,7 +103,6 @@ abstract class UserRepositoryTest {
         assertEquals(pavelWithUpdatedNameAndEmail.getEmail(), "Pavlu@mail.ru");
     }
 
-    @Test
     void deleteById() {
         List<User> addedUsers = createThreeUsers();
 
@@ -118,27 +110,37 @@ abstract class UserRepositoryTest {
                 () -> userRepository.deleteById(null));
         assertEquals("Id must not be null", nullPointerException.getMessage());
 
-        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> userRepository.deleteById(9999L));
-        assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
-
         assertEquals(3, userRepository.getAll().size());
         User deletedUser = userRepository.deleteById(addedUsers.get(1).getId());
         assertEquals(addedUsers.get(1), deletedUser);
         assertEquals(2, userRepository.getAll().size());
-        assertThrows(ObjectNotFoundException.class, () -> userRepository.getById(addedUsers.get(1).getId()));
+        assertThrows(ObjectNotFoundException.class,
+                () -> userRepository.checkForPresenceById(addedUsers.get(1).getId()));
     }
 
-    @Test
     void deleteAll() {
         List<User> addedUsers = createThreeUsers();
 
         assertEquals(3, userRepository.getAll().size());
-        assertDoesNotThrow(() -> userRepository.getById(addedUsers.get(1).getId()));
+        assertDoesNotThrow(() -> userRepository.checkForPresenceById(addedUsers.get(1).getId()));
 
         userRepository.deleteAll();
 
         assertTrue(userRepository.getAll().isEmpty());
-        assertThrows(ObjectNotFoundException.class, () -> userRepository.getById(addedUsers.get(1).getId()));
+        assertThrows(ObjectNotFoundException.class,
+                () -> userRepository.checkForPresenceById(addedUsers.get(1).getId()));
+    }
+
+    void checkForPresence() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> userRepository.checkForPresenceById(null));
+        assertEquals("Id must not be null", nullPointerException.getMessage());
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> userRepository.checkForPresenceById(9999L));
+        assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
+
+        List<User> addedUsers = createThreeUsers();
+        addedUsers.forEach(user -> assertDoesNotThrow(() -> userRepository.checkForPresenceById(user.getId())));
     }
 }
