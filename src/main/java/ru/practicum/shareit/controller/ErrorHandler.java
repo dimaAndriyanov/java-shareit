@@ -23,17 +23,19 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public List<FieldViolation> handleBodyValidationError(FieldValidationException exception) {
-        log.warn("Bad request received. Request body failed validation");
+        List<FieldViolation> fieldViolations = exception.getFieldViolations();
+        log.warn("Bad request received. Request body failed validation\n{}", exception.getFieldViolations());
         return exception.getFieldViolations();
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public List<FieldViolation> handleVariablesValidationError(ConstraintViolationException exception) {
-        log.warn("Bad request received. Request variables failed validation");
-        return exception.getConstraintViolations().stream()
+        List<FieldViolation> fieldViolations = exception.getConstraintViolations().stream()
                 .map(violation -> new FieldViolation(violation.getPropertyPath().toString(), violation.getMessage()))
                 .collect(Collectors.toList());
+        log.warn("Bad request received. Request variables failed validation\n{}", fieldViolations);
+        return fieldViolations;
     }
 
     @ExceptionHandler({
@@ -44,42 +46,43 @@ public class ErrorHandler {
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestError(Throwable exception) {
-        log.warn("Bad request received. {}", exception.getMessage());
+        log.warn("Bad request received.\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleEmptyObjectError(EmptyObjectException exception) {
-        log.warn("Bad request received. Received body has no filled fields");
+        log.warn("Bad request received. Received body has no filled fields\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handlePuttingConflictingDataError(EmailIsAlreadyInUseException exception) {
-        log.warn("Request on putting object conflicting with already existing objects has been received");
+        log.warn("Request on putting object conflicting with already existing objects has been received\n{}",
+                exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleObjectNotFoundError(ObjectNotFoundException exception) {
-        log.warn("Requested object not found. {}", exception.getMessage());
+        log.warn("Requested object not found.\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleDataAccessException(DataAccessException exception) {
-        log.warn("Request on changing item not from owner has been received");
+        log.warn("Request on changing item not from owner has been received\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleInternalServerError(Throwable exception) {
-        log.error("Error occurred. {}", exception.getMessage());
+        log.error("Error occurred.\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 }

@@ -1,12 +1,8 @@
 package ru.practicum.shareit.error;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 
-@Getter
-@RequiredArgsConstructor
-@EqualsAndHashCode
+@Data
 public class FieldViolation {
     private final String fieldName;
     private final String message;
