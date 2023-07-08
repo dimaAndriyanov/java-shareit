@@ -4,7 +4,7 @@ import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.util.ArrayList;

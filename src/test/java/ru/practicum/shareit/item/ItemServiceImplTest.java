@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.exception.DataAccessException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.UserService;
 
 import java.util.List;
@@ -29,25 +29,25 @@ class ItemServiceImplTest {
         userService.deleteAllUsers();
     }
 
-    User createOneUser(String name, String email) {
-        return userService.createUser(new User(name, email));
+    UserDto createOneUser(String name, String email) {
+        return userService.createUser(new UserDto(name, email));
     }
 
-    ItemDto createOneItem(String name, String description, Boolean available, User user) {
-        return itemService.createItem(new ItemDto(name, description, available), user.getId());
+    ItemDto createOneItem(String name, String description, Boolean available, UserDto userDto) {
+        return itemService.createItem(new ItemDto(name, description, available), userDto.getId());
     }
 
     @Test
     void searchItems() {
-        User user = createOneUser("userName", "userEmail");
-        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
-        ItemDto availableDrill = createOneItem("Battery drill", "Works on batteries", true, user);
-        ItemDto availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, user);
+        UserDto userDto = createOneUser("userName", "userEmail");
+        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, userDto);
+        ItemDto availableDrill = createOneItem("Battery drill", "Works on batteries", true, userDto);
+        ItemDto availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, userDto);
         List<ItemDto> availableItems = List.of(availableScrewdriver, availableDrill, availableToyCar);
 
-        ItemDto notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, user);
-        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
-        ItemDto notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, user);
+        ItemDto notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, userDto);
+        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, userDto);
+        ItemDto notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, userDto);
         List<ItemDto> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
 
         List<ItemDto> searchForScrewdriver = itemService.searchItems("screw");
@@ -83,7 +83,7 @@ class ItemServiceImplTest {
 
     @Test
     void createItem() {
-        User user = createOneUser("userName", "userEmail");
+        UserDto userDto = createOneUser("userName", "userEmail");
         List<ItemDto> searchForScrewdriver = itemService.searchItems("screw");
         List<ItemDto> searchForDrill = itemService.searchItems("drill");
         List<ItemDto> searchForBattery = itemService.searchItems("batt");
@@ -92,8 +92,8 @@ class ItemServiceImplTest {
         assertTrue(searchForDrill.isEmpty());
         assertTrue(searchForBattery.isEmpty());
 
-        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
-        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, userDto);
+        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, userDto);
         searchForScrewdriver = itemService.searchItems("screw");
         searchForDrill = itemService.searchItems("drill");
         searchForBattery = itemService.searchItems("batt");
@@ -108,9 +108,9 @@ class ItemServiceImplTest {
 
     @Test
     void updateItem() {
-        User user = createOneUser("userName", "userEmail");
-        ItemDto availableScrewdriver = createOneItem("Screwdriver", "New", true, user);
-        ItemDto notAvailableDrill = createOneItem("Battery drill", "New", false, user);
+        UserDto userDto = createOneUser("userName", "userEmail");
+        ItemDto availableScrewdriver = createOneItem("Screwdriver", "New", true, userDto);
+        ItemDto notAvailableDrill = createOneItem("Battery drill", "New", false, userDto);
         List<ItemDto> searchForScrewdriver = itemService.searchItems("screw");
         List<ItemDto> searchForDrill = itemService.searchItems("drill");
         List<ItemDto> searchForBattery = itemService.searchItems("batt");
@@ -120,24 +120,24 @@ class ItemServiceImplTest {
         assertTrue(searchForDrill.isEmpty());
         assertTrue(searchForBattery.isEmpty());
 
-        User otherUser = createOneUser("otherUserName", "otherUserEmail");
+        UserDto otherUserDto = createOneUser("otherUserName", "otherUserEmail");
         DataAccessException dataAccessException = assertThrows(DataAccessException.class,
                 () -> itemService.updateItem(
                         new ItemDto(null, null, true),
                         notAvailableDrill.getId(),
-                        otherUser.getId()
+                        otherUserDto.getId()
                 ));
         assertEquals("Can not update someone else's item", dataAccessException.getMessage());
 
         ItemDto stillAvailableScrewdriver = itemService.updateItem(
                 new ItemDto(null, "Works on batteries", null),
                 availableScrewdriver.getId(),
-                user.getId()
+                userDto.getId()
         );
         ItemDto stillNotAvailableDrill = itemService.updateItem(
                 new ItemDto(null, "Works on batteries", null),
                 notAvailableDrill.getId(),
-                user.getId()
+                userDto.getId()
         );
         searchForScrewdriver = itemService.searchItems("screw");
         searchForDrill = itemService.searchItems("drill");
@@ -153,12 +153,12 @@ class ItemServiceImplTest {
         ItemDto nowNotAvailableScrewdriver = itemService.updateItem(
                 new ItemDto(null, null, false),
                 availableScrewdriver.getId(),
-                user.getId()
+                userDto.getId()
         );
         ItemDto nowAvailableDrill = itemService.updateItem(
                 new ItemDto(null, null, true),
                 notAvailableDrill.getId(),
-                user.getId()
+                userDto.getId()
         );
         searchForScrewdriver = itemService.searchItems("screw");
         searchForDrill = itemService.searchItems("drill");
@@ -174,9 +174,9 @@ class ItemServiceImplTest {
 
     @Test
     void deleteItemById() {
-        User user = createOneUser("userName", "userEmail");
-        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
-        ItemDto notAvailableDrill = createOneItem("Battery drill", "New", false, user);
+        UserDto userDto = createOneUser("userName", "userEmail");
+        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, userDto);
+        ItemDto notAvailableDrill = createOneItem("Battery drill", "New", false, userDto);
         List<ItemDto> searchForScrewdriver = itemService.searchItems("screw");
         List<ItemDto> searchForDrill = itemService.searchItems("drill");
         List<ItemDto> searchForBattery = itemService.searchItems("batt");
@@ -188,16 +188,16 @@ class ItemServiceImplTest {
         assertTrue(searchForBattery.contains(availableScrewdriver));
         assertFalse(searchForBattery.contains(notAvailableDrill));
 
-        User otherUser = createOneUser("otherUserName", "otherUserEmail");
+        UserDto otherUserDto = createOneUser("otherUserName", "otherUserEmail");
         DataAccessException dataAccessException = assertThrows(DataAccessException.class,
                 () -> itemService.deleteItemById(
                         availableScrewdriver.getId(),
-                        otherUser.getId()
+                        otherUserDto.getId()
                 ));
         assertEquals("Can not delete someone else's item", dataAccessException.getMessage());
 
-        itemService.deleteItemById(availableScrewdriver.getId(), user.getId());
-        itemService.deleteItemById(notAvailableDrill.getId(), user.getId());
+        itemService.deleteItemById(availableScrewdriver.getId(), userDto.getId());
+        itemService.deleteItemById(notAvailableDrill.getId(), userDto.getId());
         searchForScrewdriver = itemService.searchItems("screw");
         searchForDrill = itemService.searchItems("drill");
         searchForBattery = itemService.searchItems("batt");
@@ -209,15 +209,15 @@ class ItemServiceImplTest {
 
     @Test
     void deleteAllItems() {
-        User user = createOneUser("userName", "userEmail");
-        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
-        ItemDto availableDrill = createOneItem("Battery drill", "Works on batteries", true, user);
-        ItemDto availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, user);
+        UserDto userDto = createOneUser("userName", "userEmail");
+        ItemDto availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, userDto);
+        ItemDto availableDrill = createOneItem("Battery drill", "Works on batteries", true, userDto);
+        ItemDto availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, userDto);
         List<ItemDto> availableItems = List.of(availableScrewdriver, availableDrill, availableToyCar);
 
-        ItemDto notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, user);
-        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
-        ItemDto notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, user);
+        ItemDto notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, userDto);
+        ItemDto notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, userDto);
+        ItemDto notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, userDto);
         List<ItemDto> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
 
         List<ItemDto> searchForBattery = itemService.searchItems("batt");
@@ -232,14 +232,14 @@ class ItemServiceImplTest {
 
     @Test
     void deleteAllByOwnerId() {
-        User user = createOneUser("userName", "userEmail");
-        ItemDto availableUsersScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
-        ItemDto notAvailableUsersDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+        UserDto userDto = createOneUser("userName", "userEmail");
+        ItemDto availableUsersScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, userDto);
+        ItemDto notAvailableUsersDrill = createOneItem("Battery drill", "Works on batteries", false, userDto);
 
-        User otherUser = createOneUser("otherUserName", "otherUserEmail");
-        ItemDto availableOtherUsersToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, otherUser);
+        UserDto otherUserDto = createOneUser("otherUserName", "otherUserEmail");
+        ItemDto availableOtherUsersToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, otherUserDto);
         ItemDto notAvailableOtherUsersToyHelicopter = createOneItem(
-                "RC toy helicopter", "Batteries NOT INCLUDED!!!", false, otherUser
+                "RC toy helicopter", "Batteries NOT INCLUDED!!!", false, otherUserDto
         );
 
         List<ItemDto> availableItems = List.of(availableUsersScrewdriver, availableOtherUsersToyCar);
@@ -250,7 +250,7 @@ class ItemServiceImplTest {
         availableItems.forEach(item -> assertTrue(searchForBatteries.contains(item)));
         notAvailableItems.forEach(item -> assertFalse(searchForBatteries.contains(item)));
 
-        itemService.deleteAllByOwnerId(otherUser.getId());
+        itemService.deleteAllByOwnerId(otherUserDto.getId());
         List<ItemDto> newSearchForBatteries = itemService.searchItems("batt");
         assertEquals(1, newSearchForBatteries.size());
         assertTrue(newSearchForBatteries.contains(availableUsersScrewdriver));

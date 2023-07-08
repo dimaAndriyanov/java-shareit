@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.EmptyObjectException;
 import ru.practicum.shareit.exception.FieldValidationException;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,7 +21,7 @@ class UserValidatorTest {
 
     @Test
     void validateForCreation() {
-        User userWithNullNameAndEmptyEmail = new User(null, "");
+        UserDto userWithNullNameAndEmptyEmail = new UserDto(null, "");
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> userValidator.validateForCreation(userWithNullNameAndEmptyEmail));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
@@ -29,7 +30,7 @@ class UserValidatorTest {
         assertTrue(fieldValidationException.getFieldViolations()
                 .contains(new FieldViolation("User.email", "must not be empty")));
 
-        User userWithEmptyNameAndNullEmail = new User(" ", null);
+        UserDto userWithEmptyNameAndNullEmail = new UserDto(" ", null);
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> userValidator.validateForCreation(userWithEmptyNameAndNullEmail));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
@@ -40,7 +41,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -49,7 +50,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email@");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email@");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -58,7 +59,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email@mail");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email@mail");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -67,7 +68,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email@mail.");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email@mail.");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -76,7 +77,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_emailmail.ru");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_emailmail.ru");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -85,7 +86,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", ".bad_email@mail.ru");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", ".bad_email@mail.ru");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -94,7 +95,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email.@mail.ru");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email.@mail.ru");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -103,7 +104,7 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad..email@mail.ru");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad..email@mail.ru");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
@@ -112,25 +113,25 @@ class UserValidatorTest {
 
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> {
-                    User userWithProperNameAndBadEmail = new User("John", "bad_email@.mail.ru");
+                    UserDto userWithProperNameAndBadEmail = new UserDto("John", "bad_email@.mail.ru");
                     userValidator.validateForCreation(userWithProperNameAndBadEmail);
                 });
         assertEquals(1, fieldValidationException.getFieldViolations().size());
         assertTrue(fieldValidationException.getFieldViolations()
                 .contains(new FieldViolation("User.email", "must be real email address")));
 
-        User userWithProperNameAndProperEmail = new User("John", "my.very_proper-email@in-box.mail.com");
+        UserDto userWithProperNameAndProperEmail = new UserDto("John", "my.very_proper-email@in-box.mail.com");
         assertDoesNotThrow(() -> userValidator.validateForCreation(userWithProperNameAndProperEmail));
     }
 
     @Test
     void validateForUpdating() {
-        User userWithNullNameAndNullEmail = new User(null, null);
+        UserDto userWithNullNameAndNullEmail = new UserDto(null, null);
         EmptyObjectException emptyObjectException = assertThrows(EmptyObjectException.class,
                 () -> userValidator.validateForUpdating(userWithNullNameAndNullEmail));
         assertEquals("Updated user must have at least one not null field", emptyObjectException.getMessage());
 
-        User userWithEmptyNameAndEmptyEmail = new User("", " ");
+        UserDto userWithEmptyNameAndEmptyEmail = new UserDto("", " ");
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> userValidator.validateForUpdating(userWithEmptyNameAndEmptyEmail));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
@@ -139,14 +140,14 @@ class UserValidatorTest {
         assertTrue(fieldValidationException.getFieldViolations()
                 .contains(new FieldViolation("User.email", "must not be empty")));
 
-        User userWithNullNameAndBadEmail = new User(null, "bad_email");
+        UserDto userWithNullNameAndBadEmail = new UserDto(null, "bad_email");
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> userValidator.validateForUpdating(userWithNullNameAndBadEmail));
         assertEquals(1, fieldValidationException.getFieldViolations().size());
         assertTrue(fieldValidationException.getFieldViolations()
                 .contains(new FieldViolation("User.email", "must be real email address")));
 
-        User userWithProperNameAndNullEmail = new User("John", null);
+        UserDto userWithProperNameAndNullEmail = new UserDto("John", null);
         assertDoesNotThrow(() -> userValidator.validateForUpdating(userWithProperNameAndNullEmail));
     }
 }

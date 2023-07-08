@@ -4,6 +4,7 @@ import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 import ru.practicum.shareit.exception.EmailIsAlreadyInUseException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.user.model.User;
 
 import java.util.HashSet;
 import java.util.List;

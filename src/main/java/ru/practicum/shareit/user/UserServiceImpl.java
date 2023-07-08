@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.item.ItemService;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
+
+import static ru.practicum.shareit.user.UserMapper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -15,32 +18,32 @@ public class UserServiceImpl implements UserService {
     private final ItemService itemService;
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.getAll();
+    public List<UserDto> getAllUsers() {
+        return toUserDto(userRepository.getAll());
     }
 
     @Override
-    public User getUserById(Long id) {
+    public UserDto getUserById(Long id) {
         userRepository.checkForPresenceById(id);
-        return userRepository.getById(id);
+        return toUserDto(userRepository.getById(id));
     }
 
     @Override
-    public User createUser(User user) {
-        return userRepository.create(user);
+    public UserDto createUser(UserDto userDto) {
+        return toUserDto(userRepository.create(toUser(userDto)));
     }
 
     @Override
-    public User updateUser(User user, Long id) {
+    public UserDto updateUser(UserDto userDto, Long id) {
         userRepository.checkForPresenceById(id);
-        return userRepository.update(user, id);
+        return toUserDto(userRepository.update(toUser(userDto), id));
     }
 
     @Override
-    public User deleteUserById(Long id) {
+    public UserDto deleteUserById(Long id) {
         userRepository.checkForPresenceById(id);
         itemService.deleteAllByOwnerId(id);
-        return userRepository.deleteById(id);
+        return toUserDto(userRepository.deleteById(id));
     }
 
     @Override
