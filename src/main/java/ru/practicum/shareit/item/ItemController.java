@@ -8,13 +8,14 @@ import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
 
+import static ru.practicum.shareit.item.ItemValidator.*;
+
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
 public class ItemController {
     private final ItemService itemService;
-    private final ItemValidator itemValidator;
 
     @GetMapping
     public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
@@ -43,7 +44,7 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        itemValidator.validateForCreation(itemDto);
+        validateForCreation(itemDto);
         return itemService.createItem(itemDto, ownerId);
     }
 
@@ -58,7 +59,7 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        itemValidator.validateForUpdating(itemDto);
+        validateForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);
     }
 

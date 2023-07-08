@@ -1,6 +1,6 @@
 package ru.practicum.shareit.item;
 
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
@@ -8,7 +8,7 @@ import ru.practicum.shareit.user.model.User;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
+@UtilityClass
 public class ItemMapper {
     public ItemDto toItemDto(Item item) {
         ItemDto result = new ItemDto(
@@ -21,7 +21,7 @@ public class ItemMapper {
     }
 
     public List<ItemDto> toItemDto(List<Item> items) {
-        return items.stream().map(this::toItemDto).collect(Collectors.toList());
+        return items.stream().map(ItemMapper::toItemDto).collect(Collectors.toList());
     }
 
     public Item toItem(ItemDto itemDto, User owner) {

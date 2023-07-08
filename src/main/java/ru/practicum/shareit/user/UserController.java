@@ -8,13 +8,14 @@ import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 
+import static ru.practicum.shareit.user.UserValidator.*;
+
 @RestController
 @RequestMapping(path = "/users")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
     private final UserService userService;
-    private final UserValidator userValidator;
 
     @GetMapping
     public List<UserDto> getAllUsers() {
@@ -34,7 +35,7 @@ public class UserController {
         log.info("Request on posting user with\nname = {}\nemail = {}\nhas been received",
                 userDto.getName(),
                 userDto.getEmail());
-        userValidator.validateForCreation(userDto);
+        validateForCreation(userDto);
         return userService.createUser(userDto);
     }
 
@@ -44,7 +45,7 @@ public class UserController {
                 userId,
                 userDto.getName(),
                 userDto.getEmail());
-        userValidator.validateForUpdating(userDto);
+        validateForUpdating(userDto);
         return userService.updateUser(userDto, userId);
     }
 

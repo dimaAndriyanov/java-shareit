@@ -1,6 +1,6 @@
 package ru.practicum.shareit.user;
 
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.EmptyObjectException;
 import ru.practicum.shareit.exception.FieldValidationException;
@@ -9,7 +9,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@UtilityClass
 public class UserValidator {
     public void validateForCreation(UserDto userDto) {
         List<FieldViolation> fieldViolations = new ArrayList<>();

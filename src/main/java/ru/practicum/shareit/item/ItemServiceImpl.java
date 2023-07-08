@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static ru.practicum.shareit.item.ItemMapper.*;
+
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
@@ -21,18 +23,18 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     @Qualifier("userRepositoryInMemoryImpl")
     private final UserRepository userRepository;
-    private final ItemMapper itemMapper;
+    //private final ItemMapper itemMapper;
     private final Map<Long, CataloguedItem> itemCatalogue = new HashMap<>();
 
     @Override
     public List<ItemDto> getAllItems() {
-        return itemMapper.toItemDto(itemRepository.getAll());
+        return toItemDto(itemRepository.getAll());
     }
 
     @Override
     public List<ItemDto> getAllItemsByOwnerId(Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
-        return itemMapper.toItemDto(itemRepository.getAllByOwnerId(ownerId));
+        return toItemDto(itemRepository.getAllByOwnerId(ownerId));
     }
 
     @Override
@@ -45,21 +47,21 @@ public class ItemServiceImpl implements ItemService {
                         entry.getValue().getDescription().contains(query))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        return itemMapper.toItemDto(itemRepository.getByIdList(idList));
+        return toItemDto(itemRepository.getByIdList(idList));
     }
 
     @Override
     public ItemDto getItemById(Long id) {
         itemRepository.checkForPresenceById(id);
-        return itemMapper.toItemDto(itemRepository.getById(id));
+        return toItemDto(itemRepository.getById(id));
     }
 
     @Override
     public ItemDto createItem(ItemDto itemDto, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
-        Item savedItem = itemRepository.create(itemMapper.toItem(itemDto, userRepository.getById(ownerId)));
+        Item savedItem = itemRepository.create(toItem(itemDto, userRepository.getById(ownerId)));
         updateItemCatalogue(savedItem);
-        return itemMapper.toItemDto(savedItem);
+        return toItemDto(savedItem);
     }
 
     @Override
@@ -67,9 +69,9 @@ public class ItemServiceImpl implements ItemService {
         userRepository.checkForPresenceById(ownerId);
         itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not update someone else's item");
-        Item updatedItem = itemRepository.update(itemMapper.toItem(itemDto, userRepository.getById(ownerId)), id);
+        Item updatedItem = itemRepository.update(toItem(itemDto, userRepository.getById(ownerId)), id);
         updateItemCatalogue(updatedItem);
-        return itemMapper.toItemDto(updatedItem);
+        return toItemDto(updatedItem);
     }
 
     @Override
@@ -79,7 +81,7 @@ public class ItemServiceImpl implements ItemService {
         checkForDataAccessRights(id, ownerId, "Can not delete someone else's item");
         Item deletedItem = itemRepository.deleteById(id);
         itemCatalogue.remove(deletedItem.getId());
-        return itemMapper.toItemDto(deletedItem);
+        return toItemDto(deletedItem);
     }
 
     @Override
