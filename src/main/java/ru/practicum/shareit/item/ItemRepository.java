@@ -7,11 +7,9 @@ import java.util.List;
 public interface ItemRepository {
     List<Item> getAll();
 
-    List<Item> getAllByOwnerId(Long ownerId);
-
-    List<Item> getByIdList(List<Long> idList);
-
     Item getById(Long id);
+
+    List<Item> getAllByOwnerId(Long ownerId);
 
     Item create(Item item);
 
@@ -19,11 +17,11 @@ public interface ItemRepository {
 
     Item deleteById(Long id);
 
-    void deleteByIdList(List<Long> idList);
-
     void deleteAll();
 
-    void checkForPresenceById(Long id);
+    void deleteAllByOwnerId(Long ownerId);
 
-    List<Long> deleteAllByOwnerId(Long ownerId);
+    List<Item> searchItems(String query);
+
+    void checkForPresenceById(Long id);
 }

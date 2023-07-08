@@ -5,14 +5,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DataAccessException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.CataloguedItem;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.item.ItemMapper.*;
 
@@ -23,31 +18,10 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     @Qualifier("userRepositoryInMemoryImpl")
     private final UserRepository userRepository;
-    //private final ItemMapper itemMapper;
-    private final Map<Long, CataloguedItem> itemCatalogue = new HashMap<>();
 
     @Override
     public List<ItemDto> getAllItems() {
         return toItemDto(itemRepository.getAll());
-    }
-
-    @Override
-    public List<ItemDto> getAllItemsByOwnerId(Long ownerId) {
-        userRepository.checkForPresenceById(ownerId);
-        return toItemDto(itemRepository.getAllByOwnerId(ownerId));
-    }
-
-    @Override
-    public List<ItemDto> searchItems(String query) {
-        if (query.isBlank()) {
-            return List.of();
-        }
-        List<Long> idList = itemCatalogue.entrySet().stream()
-                .filter(entry -> entry.getValue().getName().contains(query) ||
-                        entry.getValue().getDescription().contains(query))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        return toItemDto(itemRepository.getByIdList(idList));
     }
 
     @Override
@@ -57,11 +31,15 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    public List<ItemDto> getAllItemsByOwnerId(Long ownerId) {
+        userRepository.checkForPresenceById(ownerId);
+        return toItemDto(itemRepository.getAllByOwnerId(ownerId));
+    }
+
+    @Override
     public ItemDto createItem(ItemDto itemDto, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
-        Item savedItem = itemRepository.create(toItem(itemDto, userRepository.getById(ownerId)));
-        updateItemCatalogue(savedItem);
-        return toItemDto(savedItem);
+        return toItemDto(itemRepository.create(toItem(itemDto, userRepository.getById(ownerId))));
     }
 
     @Override
@@ -69,9 +47,7 @@ public class ItemServiceImpl implements ItemService {
         userRepository.checkForPresenceById(ownerId);
         itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not update someone else's item");
-        Item updatedItem = itemRepository.update(toItem(itemDto, userRepository.getById(ownerId)), id);
-        updateItemCatalogue(updatedItem);
-        return toItemDto(updatedItem);
+        return toItemDto(itemRepository.update(toItem(itemDto, userRepository.getById(ownerId)), id));
     }
 
     @Override
@@ -79,33 +55,22 @@ public class ItemServiceImpl implements ItemService {
         userRepository.checkForPresenceById(ownerId);
         itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not delete someone else's item");
-        Item deletedItem = itemRepository.deleteById(id);
-        itemCatalogue.remove(deletedItem.getId());
-        return toItemDto(deletedItem);
+        return toItemDto(itemRepository.deleteById(id));
     }
 
     @Override
     public void deleteAllItems() {
         itemRepository.deleteAll();
-        itemCatalogue.clear();
     }
 
     @Override
-    public void deleteAllByOwnerId(Long ownerId) {
-        userRepository.checkForPresenceById(ownerId);
-        List<Long> deletedItemsIds = itemRepository.deleteAllByOwnerId(ownerId);
-        for (Long id : deletedItemsIds) {
-            itemCatalogue.remove(id);
-        }
+    public List<ItemDto> searchItems(String query) {
+        return toItemDto(itemRepository.searchItems(query));
     }
 
     private void checkForDataAccessRights(Long itemId, Long ownerId, String message) {
         if (!itemRepository.getById(itemId).getOwner().getId().equals(ownerId)) {
             throw new DataAccessException(message);
         }
-    }
-
-    private void updateItemCatalogue(Item item) {
-        itemCatalogue.compute(item.getId(), (k, v) -> item.getAvailable() ? new CataloguedItem(item) : null);
     }
 }

@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.item.model.CataloguedItem;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.ArrayList;
@@ -15,11 +16,20 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemRepositoryInMemoryImpl implements ItemRepository {
     private final Map<Long, Item> items = new HashMap<>();
+    private final Map<Long, CataloguedItem> itemCatalogue = new HashMap<>();
     private Long nextId = 1L;
 
     @Override
     public List<Item> getAll() {
         return new ArrayList<>(items.values());
+    }
+
+    @Override
+    public Item getById(Long id) {
+        if (id == null) {
+            throw new NullPointerException("Id must not be null");
+        }
+        return items.get(id);
     }
 
     @Override
@@ -33,27 +43,6 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
     }
 
     @Override
-    public List<Item> getByIdList(List<Long> idList) {
-        if (idList == null) {
-            throw new NullPointerException("Id list must not be null");
-        }
-        return idList.stream()
-                .map(id -> {
-                    checkForPresenceById(id);
-                    return getById(id);
-                })
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Item getById(Long id) {
-        if (id == null) {
-            throw new NullPointerException("Id must not be null");
-        }
-        return items.get(id);
-    }
-
-    @Override
     public Item create(Item item) {
         if (item == null) {
             throw new NullPointerException("Can not create null item");
@@ -61,7 +50,11 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         item.setId(getNextId());
         items.put(item.getId(), item);
         log.info("New item with id {} has been created", item.getId());
-        return items.get(item.getId());
+        Item result = items.get(item.getId());
+        if (updateItemCatalogue(result)) {
+            log.info("New item with id {} has been put to Item Catalogue", result.getId());
+        }
+        return result;
     }
 
     @Override
@@ -81,7 +74,13 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         updatedItem.setId(id);
         items.put(updatedItem.getId(), updatedItem);
         log.info("Item with id {} has been updated", updatedItem.getId());
-        return items.get(updatedItem.getId());
+        Item result = items.get(updatedItem.getId());
+        if (updateItemCatalogue(result)) {
+            log.info("Item with id {} has been put (added or updated) to Item Catalogue", result.getId());
+        } else {
+            log.info("Item with id {} has been removed from Item Catalogue", result.getId());
+        }
+        return result;
     }
 
     @Override
@@ -91,21 +90,38 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         }
         Item deletedItem = items.remove(id);
         log.info("Item with id {} has been deleted", id);
+        itemCatalogue.remove(id);
+        log.info("Item with id {} has been removed from Item Catalogue", id);
         return deletedItem;
-    }
-
-    @Override
-    public void deleteByIdList(List<Long> idList) {
-        if (idList == null) {
-            throw new NullPointerException("Id list must not be null");
-        }
-        idList.forEach(this::deleteById);
     }
 
     @Override
     public void deleteAll() {
         items.clear();
         log.info("All items has been deleted");
+        itemCatalogue.clear();
+        log.info("All items has been removed from Item Catalogue");
+    }
+
+    @Override
+    public void deleteAllByOwnerId(Long ownerId) {
+        deleteByIdList(getAllByOwnerId(ownerId).stream().map(Item::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<Item> searchItems(String query) {
+        if (query.isBlank()) {
+            return List.of();
+        }
+        return itemCatalogue.entrySet().stream()
+                .filter(entry -> entry.getValue().getName().contains(query) ||
+                        entry.getValue().getDescription().contains(query))
+                .map(Map.Entry::getKey)
+                .map(id -> {
+                    checkForPresenceById(id);
+                    return getById(id);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -118,14 +134,20 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         }
     }
 
-    @Override
-    public List<Long> deleteAllByOwnerId(Long ownerId) {
-        List<Long> idsToDelete = getAllByOwnerId(ownerId).stream().map(Item::getId).collect(Collectors.toList());
-        deleteByIdList(idsToDelete);
-        return idsToDelete;
-    }
-
     private Long getNextId() {
         return nextId++;
+    }
+
+    private boolean updateItemCatalogue(Item item) {
+        return itemCatalogue.compute(
+                item.getId(), (k, v) -> item.getAvailable() ? new CataloguedItem(item) : null
+        ) != null;
+    }
+
+    private void deleteByIdList(List<Long> idList) {
+        if (idList == null) {
+            throw new NullPointerException("Id list must not be null");
+        }
+        idList.forEach(this::deleteById);
     }
 }

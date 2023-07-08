@@ -10,7 +10,6 @@ import ru.practicum.shareit.user.UserRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,6 +58,16 @@ abstract class ItemRepositoryTest {
         assertEquals(new HashSet<>(addedItems), new HashSet<>(savedItems));
     }
 
+    void getById() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> itemRepository.getById(null));
+        assertEquals("Id must not be null", nullPointerException.getMessage());
+
+        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
+
+        assertEquals(addedItems.get(1), itemRepository.getById(addedItems.get(1).getId()));
+    }
+
     void getAllByOwnerId() {
         NullPointerException nullPointerException = assertThrows(NullPointerException.class,
                 () -> itemRepository.getAllByOwnerId(null));
@@ -90,63 +99,45 @@ abstract class ItemRepositoryTest {
         assertEquals(new HashSet<>(addedUsersItems), new HashSet<>(savedUsersItems));
     }
 
-    void getByIdList() {
-        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
-                () -> itemRepository.getByIdList(null));
-        assertEquals("Id list must not be null", nullPointerException.getMessage());
-
-        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
-
-        List<Long> idList = List.of();
-        List<Item> itemsByIdList = itemRepository.getByIdList(idList);
-        assertNotNull(itemsByIdList);
-        assertTrue(itemsByIdList.isEmpty());
-
-        idList = List.of(addedItems.get(1).getId());
-        itemsByIdList = itemRepository.getByIdList(idList);
-        assertEquals(1, itemsByIdList.size());
-        assertEquals(new HashSet<>(itemsByIdList), new HashSet<>(List.of(addedItems.get(1))));
-
-        idList = List.of(addedItems.get(0).getId(), addedItems.get(2).getId());
-        itemsByIdList = itemRepository.getByIdList(idList);
-        assertEquals(2, itemsByIdList.size());
-        assertEquals(new HashSet<>(itemsByIdList), new HashSet<>(List.of(addedItems.get(0), addedItems.get(2))));
-
-        idList = addedItems.stream().map(Item::getId).collect(Collectors.toList());
-        itemsByIdList = itemRepository.getByIdList(idList);
-        assertEquals(3, itemsByIdList.size());
-        assertEquals(new HashSet<>(itemsByIdList), new HashSet<>(addedItems));
-
-        List<Long> idListWithNotExistingId = List.of(addedItems.get(0).getId(), addedItems.get(2).getId(), 9999L);
-        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> itemRepository.getByIdList(idListWithNotExistingId));
-        assertEquals("Item with id = 9999 not found", objectNotFoundException.getMessage());
-    }
-
-    void getById() {
-        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
-                () -> itemRepository.getById(null));
-        assertEquals("Id must not be null", nullPointerException.getMessage());
-
-        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
-
-        assertEquals(addedItems.get(1), itemRepository.getById(addedItems.get(1).getId()));
-    }
-
     void create() {
         NullPointerException nullPointerException = assertThrows(NullPointerException.class,
                 () -> itemRepository.create(null));
         assertEquals("Can not create null item", nullPointerException.getMessage());
 
+        User user = createOneUser("userName", "userEmail");
         Item newItem = createOneItem(
                 "Snowboard",
                 "Almost new",
                 true,
-                createOneUser("userName", "userEmail")
+                user
         );
 
         assertNotNull(itemRepository.getById(newItem.getId()));
         assertEquals(newItem, itemRepository.getById(newItem.getId()));
+
+        // Tests on updating item catalogue
+        clearRepositories();
+
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
+        List<Item> searchForDrill = itemRepository.searchItems("drill");
+        List<Item> searchForBattery = itemRepository.searchItems("batt");
+
+        assertTrue(searchForScrewdriver.isEmpty());
+        assertTrue(searchForDrill.isEmpty());
+        assertTrue(searchForBattery.isEmpty());
+
+        Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+        searchForScrewdriver = itemRepository.searchItems("screw");
+        searchForDrill = itemRepository.searchItems("drill");
+        searchForBattery = itemRepository.searchItems("batt");
+
+        assertEquals(1, searchForScrewdriver.size());
+        assertTrue(searchForScrewdriver.contains(availableScrewdriver));
+        assertTrue(searchForDrill.isEmpty());
+        assertEquals(1, searchForBattery.size());
+        assertTrue(searchForBattery.contains(availableScrewdriver));
+        assertFalse(searchForBattery.contains(notAvailableDrill));
     }
 
     void update() {
@@ -213,6 +204,58 @@ abstract class ItemRepositoryTest {
                 itemRepository.getById(addedItems.get(3).getId()).getDescription());
         assertEquals(true,
                 itemRepository.getById(addedItems.get(3).getId()).getAvailable());
+
+        // Tests on updating item catalogue
+        clearRepositories();
+
+        Item availableScrewdriver = createOneItem("Screwdriver", "New", true, user);
+        Item notAvailableDrill = createOneItem("Battery drill", "New", false, user);
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
+        List<Item> searchForDrill = itemRepository.searchItems("drill");
+        List<Item> searchForBattery = itemRepository.searchItems("batt");
+
+        assertEquals(1, searchForScrewdriver.size());
+        assertTrue(searchForScrewdriver.contains(availableScrewdriver));
+        assertTrue(searchForDrill.isEmpty());
+        assertTrue(searchForBattery.isEmpty());
+
+        Item stillAvailableScrewdriver = itemRepository.update(
+                new Item(null, "Works on batteries", null, user),
+                availableScrewdriver.getId()
+        );
+        Item stillNotAvailableDrill = itemRepository.update(
+                new Item(null, "Works on batteries", null, user),
+                notAvailableDrill.getId()
+        );
+        searchForScrewdriver = itemRepository.searchItems("screw");
+        searchForDrill = itemRepository.searchItems("drill");
+        searchForBattery = itemRepository.searchItems("batt");
+
+        assertEquals(1, searchForScrewdriver.size());
+        assertTrue(searchForScrewdriver.contains(stillAvailableScrewdriver));
+        assertTrue(searchForDrill.isEmpty());
+        assertEquals(1, searchForBattery.size());
+        assertTrue(searchForBattery.contains(stillAvailableScrewdriver));
+        assertFalse(searchForBattery.contains(stillNotAvailableDrill));
+
+        Item nowNotAvailableScrewdriver = itemRepository.update(
+                new Item(null, null, false, user),
+                availableScrewdriver.getId()
+        );
+        Item nowAvailableDrill = itemRepository.update(
+                new Item(null, null, true, user),
+                notAvailableDrill.getId()
+        );
+        searchForScrewdriver = itemRepository.searchItems("screw");
+        searchForDrill = itemRepository.searchItems("drill");
+        searchForBattery = itemRepository.searchItems("batt");
+
+        assertTrue(searchForScrewdriver.isEmpty());
+        assertEquals(1, searchForDrill.size());
+        assertTrue(searchForDrill.contains(nowAvailableDrill));
+        assertEquals(1, searchForBattery.size());
+        assertFalse(searchForBattery.contains(nowNotAvailableScrewdriver));
+        assertTrue(searchForBattery.contains(nowAvailableDrill));
     }
 
     void deleteById() {
@@ -231,44 +274,37 @@ abstract class ItemRepositoryTest {
         assertEquals(deletedItem, addedItems.get(1));
         assertThrows(ObjectNotFoundException.class,
                 () -> itemRepository.checkForPresenceById(addedItems.get(1).getId()));
-    }
 
-    void deleteByIdList() {
-        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
-                () -> itemRepository.deleteByIdList(null));
-        assertEquals("Id list must not be null", nullPointerException.getMessage());
+        // Tests on updating item catalogue
+        clearRepositories();
 
-        User user = createOneUser("userName", "userEmail");
-        List<Item> addedItems = createThreeItems(user);
+        Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item notAvailableDrill = createOneItem("Battery drill", "New", false, user);
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
+        List<Item> searchForDrill = itemRepository.searchItems("drill");
+        List<Item> searchForBattery = itemRepository.searchItems("batt");
 
-        assertEquals(3, itemRepository.getAll().size());
-        assertEquals(new HashSet<>(addedItems), new HashSet<>(itemRepository.getAll()));
+        assertEquals(1, searchForScrewdriver.size());
+        assertTrue(searchForScrewdriver.contains(availableScrewdriver));
+        assertTrue(searchForDrill.isEmpty());
+        assertEquals(1, searchForBattery.size());
+        assertTrue(searchForBattery.contains(availableScrewdriver));
+        assertFalse(searchForBattery.contains(notAvailableDrill));
 
-        itemRepository.deleteByIdList(List.of());
+        itemRepository.deleteById(availableScrewdriver.getId());
+        itemRepository.deleteById(notAvailableDrill.getId());
+        searchForScrewdriver = itemRepository.searchItems("screw");
+        searchForDrill = itemRepository.searchItems("drill");
+        searchForBattery = itemRepository.searchItems("batt");
 
-        assertEquals(3, itemRepository.getAll().size());
-        assertEquals(new HashSet<>(addedItems), new HashSet<>(itemRepository.getAll()));
-
-        itemRepository.deleteByIdList(List.of(addedItems.get(1).getId()));
-        assertEquals(2, itemRepository.getAll().size());
-        assertEquals(new HashSet<>(List.of(addedItems.get(0), addedItems.get(2))),
-                new HashSet<>(itemRepository.getAll()));
-
-        itemRepository.deleteByIdList(List.of(addedItems.get(0).getId(), addedItems.get(2).getId()));
-        assertTrue(itemRepository.getAll().isEmpty());
-
-        List<Item> newlyAddedItems = createThreeItems(user);
-        itemRepository.deleteByIdList(List.of(newlyAddedItems.get(1).getId(), newlyAddedItems.get(2).getId()));
-        assertEquals(1, itemRepository.getAll().size());
-        assertEquals(new HashSet<>(List.of(newlyAddedItems.get(0))),
-                new HashSet<>(itemRepository.getAll()));
-
-        assertDoesNotThrow(() -> itemRepository.deleteByIdList(List.of(newlyAddedItems.get(0).getId(), 9999L)));
-        assertTrue(itemRepository.getAll().isEmpty());
+        assertTrue(searchForScrewdriver.isEmpty());
+        assertTrue(searchForDrill.isEmpty());
+        assertTrue(searchForBattery.isEmpty());
     }
 
     void deleteAll() {
-        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
+        User user = createOneUser("userName", "userEmail");
+        List<Item> addedItems = createThreeItems(user);
 
         assertEquals(3, itemRepository.getAll().size());
         assertDoesNotThrow(() -> itemRepository.checkForPresenceById(addedItems.get(1).getId()));
@@ -278,19 +314,28 @@ abstract class ItemRepositoryTest {
         assertTrue(itemRepository.getAll().isEmpty());
         assertThrows(ObjectNotFoundException.class,
                 () -> itemRepository.checkForPresenceById(addedItems.get(1).getId()));
-    }
 
-    void checkForPresenceById() {
-        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
-                () -> itemRepository.checkForPresenceById(null));
-        assertEquals("Id must not be null", nullPointerException.getMessage());
+        // Tests on updating item catalogue
+        clearRepositories();
 
-        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> itemRepository.checkForPresenceById(9999L));
-        assertEquals("Item with id = 9999 not found", objectNotFoundException.getMessage());
+        Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item availableDrill = createOneItem("Battery drill", "Works on batteries", true, user);
+        Item availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, user);
+        List<Item> availableItems = List.of(availableScrewdriver, availableDrill, availableToyCar);
 
-        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
-        addedItems.forEach(item -> assertDoesNotThrow(() -> itemRepository.checkForPresenceById(item.getId())));
+        Item notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, user);
+        Item notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+        Item notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, user);
+        List<Item> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
+
+        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        assertEquals(3, searchForBattery.size());
+        availableItems.forEach(item -> assertTrue(searchForBattery.contains(item)));
+        notAvailableItems.forEach(item -> assertFalse(searchForBattery.contains(item)));
+
+        itemRepository.deleteAll();
+        List<Item> searchForBatteryAfterDeletingAllItems = itemRepository.searchItems("batt");
+        assertTrue(searchForBatteryAfterDeletingAllItems.isEmpty());
     }
 
     void deleteAllByOwnerId() {
@@ -315,5 +360,87 @@ abstract class ItemRepositoryTest {
 
         assertDoesNotThrow(() -> itemRepository.deleteAllByOwnerId(otherUser.getId()));
         assertTrue(itemRepository.getAll().isEmpty());
+
+        // Tests on updating item catalogue
+        clearRepositories();
+
+        Item availableUsersScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item notAvailableUsersDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+
+        Item availableOtherUsersToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, otherUser);
+        Item notAvailableOtherUsersToyHelicopter = createOneItem(
+                "RC toy helicopter", "Batteries NOT INCLUDED!!!", false, otherUser
+        );
+
+        List<Item> availableItems = List.of(availableUsersScrewdriver, availableOtherUsersToyCar);
+        List<Item> notAvailableItems = List.of(notAvailableUsersDrill, notAvailableOtherUsersToyHelicopter);
+        List<Item> searchForBatteries = itemRepository.searchItems("batt");
+
+        assertEquals(2, searchForBatteries.size());
+        availableItems.forEach(item -> assertTrue(searchForBatteries.contains(item)));
+        notAvailableItems.forEach(item -> assertFalse(searchForBatteries.contains(item)));
+
+        itemRepository.deleteAllByOwnerId(otherUser.getId());
+        List<Item> newSearchForBatteries = itemRepository.searchItems("batt");
+        assertEquals(1, newSearchForBatteries.size());
+        assertTrue(newSearchForBatteries.contains(availableUsersScrewdriver));
+        assertFalse(newSearchForBatteries.contains(availableOtherUsersToyCar));
+        notAvailableItems.forEach(item -> assertFalse(newSearchForBatteries.contains(item)));
+    }
+
+    void searchItems() {
+        User user = createOneUser("userName", "userEmail");
+        Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item availableDrill = createOneItem("Battery drill", "Works on batteries", true, user);
+        Item availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, user);
+        List<Item> availableItems = List.of(availableScrewdriver, availableDrill, availableToyCar);
+
+        Item notAvailableScrewdriver = createOneItem("Screwdriver", "Works on batteries", false, user);
+        Item notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, user);
+        Item notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, user);
+        List<Item> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
+
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
+        assertNotNull(searchForScrewdriver);
+        assertEquals(1, searchForScrewdriver.size());
+        assertTrue(searchForScrewdriver.contains(availableScrewdriver));
+        assertFalse(searchForScrewdriver.contains(notAvailableScrewdriver));
+
+        List<Item> searchForIncluded = itemRepository.searchItems("included");
+        assertNotNull(searchForIncluded);
+        assertEquals(1, searchForIncluded.size());
+        assertTrue(searchForIncluded.contains(availableToyCar));
+        assertFalse(searchForIncluded.contains(notAvailableToyCar));
+
+        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        assertNotNull(searchForBattery);
+        assertEquals(3, searchForBattery.size());
+        availableItems.forEach(item -> assertTrue(searchForBattery.contains(item)));
+        notAvailableItems.forEach(item -> assertFalse(searchForBattery.contains(item)));
+
+        List<Item> searchForSnowboard = itemRepository.searchItems("snowboard");
+        assertNotNull(searchForSnowboard);
+        assertTrue(searchForSnowboard.isEmpty());
+
+        List<Item> searchForNothing = itemRepository.searchItems("");
+        assertNotNull(searchForNothing);
+        assertTrue(searchForNothing.isEmpty());
+
+        searchForNothing = itemRepository.searchItems("   ");
+        assertNotNull(searchForNothing);
+        assertTrue(searchForNothing.isEmpty());
+    }
+
+    void checkForPresenceById() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> itemRepository.checkForPresenceById(null));
+        assertEquals("Id must not be null", nullPointerException.getMessage());
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> itemRepository.checkForPresenceById(9999L));
+        assertEquals("Item with id = 9999 not found", objectNotFoundException.getMessage());
+
+        List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
+        addedItems.forEach(item -> assertDoesNotThrow(() -> itemRepository.checkForPresenceById(item.getId())));
     }
 }

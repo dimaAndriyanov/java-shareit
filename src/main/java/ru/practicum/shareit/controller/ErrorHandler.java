@@ -23,7 +23,6 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public List<FieldViolation> handleBodyValidationError(FieldValidationException exception) {
-        List<FieldViolation> fieldViolations = exception.getFieldViolations();
         log.warn("Bad request received. Request body failed validation\n{}", exception.getFieldViolations());
         return exception.getFieldViolations();
     }

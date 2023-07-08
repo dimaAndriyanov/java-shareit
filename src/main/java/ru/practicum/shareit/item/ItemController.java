@@ -17,12 +17,6 @@ import static ru.practicum.shareit.item.ItemValidator.*;
 public class ItemController {
     private final ItemService itemService;
 
-    @GetMapping
-    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on getting all items of user with id = {} has been received", ownerId);
-        return itemService.getAllItemsByOwnerId(ownerId);
-    }
-
     @GetMapping("/all")
     public List<ItemDto> getAllItems() {
         log.info("Request on getting all items has been received");
@@ -33,6 +27,12 @@ public class ItemController {
     public ItemDto getItemById(@PathVariable Long id) {
         log.info("Request on getting item with id = {} has been received", id);
         return itemService.getItemById(id);
+    }
+
+    @GetMapping
+    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        log.info("Request on getting all items of user with id = {} has been received", ownerId);
+        return itemService.getAllItemsByOwnerId(ownerId);
     }
 
     @PostMapping

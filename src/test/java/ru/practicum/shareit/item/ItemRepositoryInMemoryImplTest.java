@@ -25,20 +25,14 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
 
     @Test
     @Override
-    void getAllByOwnerId() {
-        super.getAllByOwnerId();
-    }
-
-    @Test
-    @Override
-    void getByIdList() {
-        super.getByIdList();
-    }
-
-    @Test
-    @Override
     void getById() {
         super.getById();
+    }
+
+    @Test
+    @Override
+    void getAllByOwnerId() {
+        super.getAllByOwnerId();
     }
 
     @Test
@@ -61,25 +55,25 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
 
     @Test
     @Override
-    void deleteByIdList() {
-        super.deleteByIdList();
-    }
-
-    @Test
-    @Override
     void deleteAll() {
         super.deleteAll();
     }
 
     @Test
     @Override
-    void checkForPresenceById() {
-        super.checkForPresenceById();
+    void deleteAllByOwnerId() {
+        super.deleteAllByOwnerId();
     }
 
     @Test
     @Override
-    void deleteAllByOwnerId() {
-        super.deleteAllByOwnerId();
+    void searchItems() {
+        super.searchItems();
+    }
+
+    @Test
+    @Override
+    void checkForPresenceById() {
+        super.checkForPresenceById();
     }
 }
