@@ -16,7 +16,7 @@ import static ru.practicum.shareit.item.ItemMapper.*;
 public class ItemServiceImpl implements ItemService {
     @Qualifier("itemRepositoryInMemoryImpl")
     private final ItemRepository itemRepository;
-    @Qualifier("userRepositoryInMemoryImpl")
+    @Qualifier("userRepositoryDbImpl")
     private final UserRepository userRepository;
 
     @Override
