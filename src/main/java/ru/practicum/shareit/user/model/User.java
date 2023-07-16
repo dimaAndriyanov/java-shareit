@@ -21,8 +21,12 @@ public class User {
     @Column(nullable = false, unique = true)
     private final String email;
 
-    public User() {
+    User() {
         name = null;
         email = null;
+    }
+
+    public void setNullId() {
+        id = null;
     }
 }

@@ -1,12 +1,12 @@
 package ru.practicum.shareit.item;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.model.CataloguedItem;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
-public class ItemRepositoryInMemoryImpl implements ItemRepository {
-    private final Map<Long, Item> items = new HashMap<>();
+@RequiredArgsConstructor
+public class ItemRepositoryDbImpl implements ItemRepository {
+    private final ItemDbInterface itemDbInterface;
     private final Map<Long, CataloguedItem> itemCatalogue = new HashMap<>();
-    private Long nextId = 1L;
 
     @Override
     public List<Item> getAll() {
-        return new ArrayList<>(items.values());
+        return itemDbInterface.findAll();
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        return items.get(id);
+        return itemDbInterface.findById(id).get();
     }
 
     @Override
@@ -37,9 +37,7 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (ownerId == null) {
             throw new NullPointerException("Owner id must not be null");
         }
-        return items.values().stream()
-                .filter(item -> item.getOwner().getId().equals(ownerId))
-                .collect(Collectors.toList());
+        return itemDbInterface.findAllByOwnerId(ownerId);
     }
 
     @Override
@@ -47,10 +45,9 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (item == null) {
             throw new NullPointerException("Can not create null item");
         }
-        item.setId(getNextId());
-        items.put(item.getId(), item);
-        log.info("New item with id {} has been created", item.getId());
-        Item result = items.get(item.getId());
+        item.setNullId();
+        Item result = itemDbInterface.save(item);
+        log.info("New item with id {} has been created", result.getId());
         if (updateItemCatalogue(result)) {
             log.info("New item with id {} has been put to Item Catalogue", result.getId());
         }
@@ -65,16 +62,16 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
+        Item oldItem = itemDbInterface.findByIdWithOwner(id).get();
         Item updatedItem = new Item(
-                item.getName() != null ? item.getName() : items.get(id).getName(),
-                item.getDescription() != null ? item.getDescription() : items.get(id).getDescription(),
-                item.getAvailable() != null ? item.getAvailable() : items.get(id).getAvailable(),
-                items.get(id).getOwner()
+                item.getName() != null ? item.getName() : oldItem.getName(),
+                item.getDescription() != null ? item.getDescription() : oldItem.getDescription(),
+                item.getAvailable() != null ? item.getAvailable() : oldItem.getAvailable(),
+                oldItem.getOwner()
         );
         updatedItem.setId(id);
-        items.put(updatedItem.getId(), updatedItem);
+        Item result = itemDbInterface.saveAndFlush(updatedItem);
         log.info("Item with id {} has been updated", updatedItem.getId());
-        Item result = items.get(updatedItem.getId());
         if (updateItemCatalogue(result)) {
             log.info("Item with id {} has been put (added or updated) to Item Catalogue", result.getId());
         } else {
@@ -88,7 +85,8 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        Item deletedItem = items.remove(id);
+        Item deletedItem = itemDbInterface.findById(id).get();
+        itemDbInterface.deleteById(id);
         log.info("Item with id {} has been deleted", id);
         if (deletedItem.getAvailable()) {
             itemCatalogue.remove(id);
@@ -99,7 +97,7 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
 
     @Override
     public void deleteAll() {
-        items.clear();
+        itemDbInterface.deleteAll();
         log.info("All items has been deleted");
         itemCatalogue.clear();
         log.info("All items has been removed from Item Catalogue");
@@ -107,7 +105,44 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
 
     @Override
     public void deleteAllByOwnerId(Long ownerId) {
-        deleteByIdList(getAllByOwnerId(ownerId).stream().map(Item::getId).collect(Collectors.toList()));
+        if (ownerId == null) {
+            throw new NullPointerException("Owner id must not be null");
+        }
+        List<Item> itemsToDelete = itemDbInterface.findAllByOwnerId(ownerId);
+        if (!itemsToDelete.isEmpty()) {
+            List<Long> idsOfItemsToDelete = itemsToDelete
+                    .stream()
+                    .map(Item::getId)
+                    .collect(Collectors.toList());
+            itemDbInterface.deleteAllByOwnerId(ownerId);
+            StringBuilder logMessageForItemsDeletion = new StringBuilder("Items with id: ");
+            for (Long id : idsOfItemsToDelete) {
+                logMessageForItemsDeletion.append(id).append(", ");
+            }
+            logMessageForItemsDeletion.delete(logMessageForItemsDeletion.length() - 2, logMessageForItemsDeletion.length());
+            logMessageForItemsDeletion.append(" has been removed due to deletion of user with id {}");
+            log.info(logMessageForItemsDeletion.toString(), ownerId);
+
+            List<Long> idsOfItemsToDeleteFromCatalogue = itemsToDelete
+                    .stream()
+                    .filter(Item::getAvailable)
+                    .map(Item::getId)
+                    .collect(Collectors.toList());
+            if (!idsOfItemsToDeleteFromCatalogue.isEmpty()) {
+                StringBuilder logMessageForItemDeletionFromCatalogue = new StringBuilder("Items with id: ");
+                for (Long id : idsOfItemsToDeleteFromCatalogue) {
+                    itemCatalogue.remove(id);
+                    logMessageForItemDeletionFromCatalogue.append(id).append(", ");
+                }
+                logMessageForItemDeletionFromCatalogue.delete(
+                        logMessageForItemDeletionFromCatalogue.length() - 2,
+                        logMessageForItemDeletionFromCatalogue.length()
+                );
+                logMessageForItemDeletionFromCatalogue
+                        .append(" has been removed from Catalogue due to deletion of user with id {}");
+                log.info(logMessageForItemDeletionFromCatalogue.toString(), ownerId);
+            }
+        }
     }
 
     @Override
@@ -115,15 +150,12 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (query.isBlank()) {
             return List.of();
         }
-        return itemCatalogue.entrySet().stream()
+        List<Long> foundItemsIds = itemCatalogue.entrySet().stream()
                 .filter(entry -> entry.getValue().getName().contains(query) ||
                         entry.getValue().getDescription().contains(query))
                 .map(Map.Entry::getKey)
-                .map(id -> {
-                    checkForPresenceById(id);
-                    return getById(id);
-                })
                 .collect(Collectors.toList());
+        return itemDbInterface.findAllById(foundItemsIds);
     }
 
     @Override
@@ -131,25 +163,14 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        if (!items.containsKey(id)) {
+        if (itemDbInterface.findById(id).isEmpty()) {
             throw new ObjectNotFoundException(String.format("Item with id = %s not found", id));
         }
-    }
-
-    private Long getNextId() {
-        return nextId++;
     }
 
     private boolean updateItemCatalogue(Item item) {
         return itemCatalogue.compute(
                 item.getId(), (k, v) -> item.getAvailable() ? new CataloguedItem(item) : null
         ) != null;
-    }
-
-    private void deleteByIdList(List<Long> idList) {
-        if (idList == null) {
-            throw new NullPointerException("Id list must not be null");
-        }
-        idList.forEach(this::deleteById);
     }
 }

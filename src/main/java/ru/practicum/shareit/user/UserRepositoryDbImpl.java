@@ -35,6 +35,7 @@ public class UserRepositoryDbImpl implements UserRepository {
             throw new NullPointerException("Can not create null user");
         }
         try {
+            user.setNullId();
             User result = userDbInterface.save(user);
             log.info("New user with id {} has been created", user.getId());
             return result;

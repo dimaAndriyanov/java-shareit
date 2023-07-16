@@ -7,11 +7,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.user.UserRepository;
 
 @SpringBootTest
-class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
+class ItemRepositoryDbImplTest extends ItemRepositoryTest {
     @Autowired
-    ItemRepositoryInMemoryImplTest(
-            @Qualifier("itemRepositoryInMemoryImpl") ItemRepository itemRepository,
-            @Qualifier("userRepositoryInMemoryImpl") UserRepository userRepository) {
+    ItemRepositoryDbImplTest(
+            @Qualifier("itemRepositoryDbImpl") ItemRepository itemRepository,
+            @Qualifier("userRepositoryDbImpl") UserRepository userRepository) {
         setItemRepository(itemRepository);
         setUserRepository(userRepository);
     }

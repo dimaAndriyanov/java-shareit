@@ -16,6 +16,7 @@ import static ru.practicum.shareit.user.UserMapper.*;
 public class UserServiceImpl implements UserService {
     @Qualifier("userRepositoryDbImpl")
     private final UserRepository userRepository;
+    @Qualifier("itemRepositoryDbImpl")
     private final ItemRepository itemRepository;
 
     @Override
