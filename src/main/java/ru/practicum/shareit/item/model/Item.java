@@ -31,10 +31,10 @@ public class Item {
     private final User owner;
 
     Item() {
-        this.name = null;
-        this.description = null;
-        this.available = null;
-        this.owner = null;
+        name = null;
+        description = null;
+        available = null;
+        owner = null;
     }
 
     public void setNullId() {

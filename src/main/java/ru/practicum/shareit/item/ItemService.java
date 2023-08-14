@@ -8,7 +8,7 @@ public interface ItemService {
 
     List<ItemDto> getAllItems();
 
-    ItemDto getItemById(Long id);
+    ItemDto getItemById(Long id, Long userId);
 
     List<ItemDto> getAllItemsByOwnerId(Long ownerId);
 
