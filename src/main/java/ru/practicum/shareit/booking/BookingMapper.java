@@ -9,6 +9,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,11 +18,12 @@ import static ru.practicum.shareit.item.ItemMapper.*;
 
 @UtilityClass
 public class BookingMapper {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     public SentBookingDto toBookingDto(Booking booking) {
         return new SentBookingDto(
                 booking.getId(),
-                booking.getStart().toString().substring(0, 19),
-                booking.getEnd().toString().substring(0, 19),
+                booking.getStart().format(formatter),
+                booking.getEnd().format(formatter),
                 booking.getStatus(),
                 toUserDtoForBooking(booking.getBooker()),
                 toItemDtoForBooking(booking.getItem())

@@ -47,4 +47,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "where b.item.id in ?1 " +
             "order by b.start")
     List<Booking> findAllByItemIdOrderByStart(Iterable<Long> ids);
+
+    List<Booking> findAllByItemIdAndBookerId(Long itemId, Long bookerId);
 }

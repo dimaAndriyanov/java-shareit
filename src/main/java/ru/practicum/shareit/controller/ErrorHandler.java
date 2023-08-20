@@ -44,7 +44,8 @@ public class ErrorHandler {
             MissingServletRequestParameterException.class,
             NotAvailableItemException.class,
             CanNotUpdateBookingStatus.class,
-            UnsupportedState.class
+            UnsupportedState.class,
+            PostingCommentWithoutCompletedBookingException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestError(Throwable exception) {

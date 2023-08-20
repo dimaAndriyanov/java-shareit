@@ -4,8 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.error.FieldViolation;
+import ru.practicum.shareit.exception.FieldValidationException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static ru.practicum.shareit.item.ItemValidator.*;
@@ -65,7 +69,7 @@ public class ItemController {
 
     @DeleteMapping("/{id}")
     public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on deleting item with id = {} by user with id = {} ahs been received", id, ownerId);
+        log.info("Request on deleting item with id = {} by user with id = {} has been received", id, ownerId);
         return itemService.deleteItemById(id, ownerId);
     }
 
@@ -79,5 +83,23 @@ public class ItemController {
     public List<ItemDto> searchItems(@RequestParam("text") String query) {
         log.info("Request on getting items by searchQuery = \"{}\" has been received", query);
         return itemService.searchItems(query.toLowerCase());
+    }
+
+    @PostMapping("/{id}/comment")
+    public CommentDto createComment(@RequestBody CommentDto commentDto,
+                                    @PathVariable("id") Long itemId,
+                                    @RequestHeader("X-Sharer-User-Id") Long authorId) {
+        log.info("Request on posting comment with text = {}" +
+                "\non item with id = {}\nfrom user with id = {} has been received",
+                commentDto.getText(),
+                itemId,
+                authorId);
+        if (commentDto.getText() == null) {
+            throw new FieldValidationException(List.of(new FieldViolation("Comment.text", "must not be null")));
+        }
+        if (commentDto.getText().isEmpty()) {
+            throw new FieldValidationException(List.of(new FieldViolation("Comment.text", "must not be empty")));
+        }
+        return itemService.createComment(commentDto, itemId, authorId, LocalDateTime.now());
     }
 }

@@ -43,8 +43,4 @@ public class Booking {
         booker = null;
         item = null;
     }
-
-    public void setNullId() {
-        id = null;
-    }
 }

@@ -97,10 +97,6 @@ public class BookingServiceImpl implements BookingService {
                 booker,
                 item));
         log.info("Booking with id = {} has been created", result.getId());
-        System.out.printf("Item with id = %s is already booked from %s, till %s%n",
-                itemId,
-                result.getStart(),
-                result.getEnd());
         return toBookingDto(result);
     }
 
