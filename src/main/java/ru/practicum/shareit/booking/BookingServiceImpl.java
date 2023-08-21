@@ -9,7 +9,7 @@ import ru.practicum.shareit.booking.dto.SentBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
-import ru.practicum.shareit.exception.BookingDatesIntersectWithAlreadyExistingBooking;
+import ru.practicum.shareit.exception.BookingDatesIntersectWithAlreadyExistingBookingException;
 import ru.practicum.shareit.exception.CanNotUpdateBookingStatus;
 import ru.practicum.shareit.exception.NotAvailableItemException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
@@ -83,7 +83,7 @@ public class BookingServiceImpl implements BookingService {
                         !(booking.getEnd().isBefore(dates.get(0)) || dates.get(1).isBefore(booking.getStart())))
                 .findFirst();
         if (optionalIntersectingBooking.isPresent()) {
-            throw new BookingDatesIntersectWithAlreadyExistingBooking(
+            throw new BookingDatesIntersectWithAlreadyExistingBookingException(
                     String.format("Item with id = %s is already booked from %s, till %s",
                             itemId,
                             optionalIntersectingBooking.get().getStart(),

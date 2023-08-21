@@ -2,8 +2,10 @@ package ru.practicum.shareit.booking;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
+import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.FieldValidationException;
+import ru.practicum.shareit.exception.UnsupportedStateException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -62,5 +64,13 @@ public class BookingValidator {
         }
 
         return List.of(start, end);
+    }
+
+    public BookingState validateBookingState(String bookingState) {
+        try {
+            return BookingState.valueOf(bookingState);
+        } catch (IllegalArgumentException exception) {
+            throw new UnsupportedStateException("Unknown state: " + bookingState);
+        }
     }
 }

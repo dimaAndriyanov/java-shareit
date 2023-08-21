@@ -11,7 +11,7 @@ import java.util.List;
 
 @UtilityClass
 public class ItemValidator {
-    public void validateForCreation(ItemDto itemDto) {
+    public void validateItemForCreation(ItemDto itemDto) {
         List<FieldViolation> fieldViolations = new ArrayList<>();
 
         if (itemDto.getName() != null) {
@@ -39,7 +39,7 @@ public class ItemValidator {
         }
     }
 
-    public void validateForUpdating(ItemDto itemDto) {
+    public void validateItemForUpdating(ItemDto itemDto) {
         if (itemDto.getName() == null && itemDto.getDescription() == null && itemDto.getAvailable() == null) {
             throw new EmptyObjectException("Updated item must have at least one not null field");
         }

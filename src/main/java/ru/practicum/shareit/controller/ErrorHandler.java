@@ -44,7 +44,7 @@ public class ErrorHandler {
             MissingServletRequestParameterException.class,
             NotAvailableItemException.class,
             CanNotUpdateBookingStatus.class,
-            UnsupportedState.class,
+            UnsupportedStateException.class,
             PostingCommentWithoutCompletedBookingException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -60,7 +60,7 @@ public class ErrorHandler {
         return new ErrorResponse(exception.getMessage());
     }
 
-    @ExceptionHandler ({EmailIsAlreadyInUseException.class, BookingDatesIntersectWithAlreadyExistingBooking.class})
+    @ExceptionHandler ({EmailIsAlreadyInUseException.class, BookingDatesIntersectWithAlreadyExistingBookingException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handlePuttingConflictingDataError(Throwable exception) {
         log.warn("Request on putting object conflicting with already existing objects has been received\n{}",

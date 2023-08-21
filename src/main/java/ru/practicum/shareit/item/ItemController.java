@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.error.FieldViolation;
-import ru.practicum.shareit.exception.FieldValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
@@ -13,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static ru.practicum.shareit.item.ItemValidator.*;
+import static ru.practicum.shareit.item.CommentValidator.*;
 
 @RestController
 @RequestMapping("/items")
@@ -48,7 +47,7 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        validateForCreation(itemDto);
+        validateItemForCreation(itemDto);
         return itemService.createItem(itemDto, ownerId);
     }
 
@@ -63,7 +62,7 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        validateForUpdating(itemDto);
+        validateItemForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);
     }
 
@@ -94,12 +93,7 @@ public class ItemController {
                 commentDto.getText(),
                 itemId,
                 authorId);
-        if (commentDto.getText() == null) {
-            throw new FieldValidationException(List.of(new FieldViolation("Comment.text", "must not be null")));
-        }
-        if (commentDto.getText().isEmpty()) {
-            throw new FieldValidationException(List.of(new FieldViolation("Comment.text", "must not be empty")));
-        }
+        validateCommentDto(commentDto);
         return itemService.createComment(commentDto, itemId, authorId, LocalDateTime.now());
     }
 }

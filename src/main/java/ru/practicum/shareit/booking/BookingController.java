@@ -6,10 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
 import ru.practicum.shareit.booking.dto.SentBookingDto;
-import ru.practicum.shareit.booking.model.BookingState;
-import ru.practicum.shareit.exception.UnsupportedState;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static ru.practicum.shareit.booking.BookingValidator.*;
@@ -33,13 +30,7 @@ public class BookingController {
                                                             @RequestHeader("X-Sharer-User-Id") Long bookerId) {
         log.info("Request on getting own bookings by state = \"{}\" by booker with id = {} has been received",
                 state, bookerId);
-        BookingState bookingState;
-        try {
-            bookingState = BookingState.valueOf(state);
-        } catch (IllegalArgumentException exception) {
-            throw new UnsupportedState("Unknown state: " + state);
-        }
-        return bookingService.getBookingsByStateAndBookerId(bookingState, bookerId);
+        return bookingService.getBookingsByStateAndBookerId(validateBookingState(state), bookerId);
     }
 
     @GetMapping("/owner")
@@ -47,13 +38,7 @@ public class BookingController {
                                                             @RequestHeader("X-Sharer-User-Id") Long ownerId) {
         log.info("Request on getting bookings on own items by state = \"{}\" by owner with id = {} has been received",
                 state, ownerId);
-        BookingState bookingState;
-        try {
-            bookingState = BookingState.valueOf(state);
-        } catch (IllegalArgumentException exception) {
-            throw new UnsupportedState("Unknown state: " + state);
-        }
-        return bookingService.getBookingsByStateAndOwnerId(bookingState, ownerId);
+        return bookingService.getBookingsByStateAndOwnerId(validateBookingState(state), ownerId);
     }
 
     @PostMapping()
@@ -64,8 +49,7 @@ public class BookingController {
                 bookingDto.getItemId(),
                 bookingDto.getStart(),
                 bookingDto.getEnd());
-        List<LocalDateTime> dates =  validateForCreation(bookingDto);
-        return bookingService.createBooking(bookingDto.getItemId(), bookerId, dates);
+        return bookingService.createBooking(bookingDto.getItemId(), bookerId, validateForCreation(bookingDto));
     }
 
     @PatchMapping("/{id}")
