@@ -19,6 +19,7 @@ import static ru.practicum.shareit.item.ItemMapper.*;
 @UtilityClass
 public class BookingMapper {
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     public SentBookingDto toBookingDto(Booking booking) {
         return new SentBookingDto(
                 booking.getId(),

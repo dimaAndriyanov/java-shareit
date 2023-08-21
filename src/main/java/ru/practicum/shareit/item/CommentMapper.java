@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @UtilityClass
 public class CommentMapper {
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     public CommentDto toCommentDto(Comment comment) {
         CommentDto result =
                 new CommentDto(comment.getText(), comment.getAuthorName(), comment.getCreated().format(formatter));
