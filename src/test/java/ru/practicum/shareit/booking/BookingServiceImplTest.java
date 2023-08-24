@@ -223,7 +223,7 @@ class BookingServiceImplTest {
                 () -> bookingService.createBooking(item1.getId(), users.get(2).getId(),
                                 List.of(now.plusHours(1), now.plusDays(1)))
         );
-        assertEquals("Item with id = " + successfulBooking.getId() + " is already booked from " +
+        assertEquals("Item with id = " + successfulBooking.getItem().getId() + " is already booked from " +
                 now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", till " +
                 now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 intersectingDatesException.getMessage());
