@@ -1,18 +1,14 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.user;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.practicum.shareit.user.UserRepository;
 
 @SpringBootTest
-class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
+class UserRepositoryDbImplTest extends UserRepositoryTest {
     @Autowired
-    ItemRepositoryInMemoryImplTest(
-            @Qualifier("itemRepositoryInMemoryImpl") ItemRepository itemRepository,
-            @Qualifier("userRepositoryInMemoryImpl") UserRepository userRepository) {
-        setItemRepository(itemRepository);
+    UserRepositoryDbImplTest(@Qualifier("userRepositoryDbImpl") UserRepository userRepository) {
         setUserRepository(userRepository);
     }
 
@@ -26,12 +22,6 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
     @Override
     void getById() {
         super.getById();
-    }
-
-    @Test
-    @Override
-    void getAllByOwnerId() {
-        super.getAllByOwnerId();
     }
 
     @Test
@@ -60,19 +50,7 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
 
     @Test
     @Override
-    void deleteAllByOwnerId() {
-        super.deleteAllByOwnerId();
-    }
-
-    @Test
-    @Override
-    void searchItems() {
-        super.searchItems();
-    }
-
-    @Test
-    @Override
-    void checkForPresenceById() {
-        super.checkForPresenceById();
+    void checkForPresence() {
+        super.checkForPresence();
     }
 }

@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ItemValidatorTest {
     @Test
-    void validateForCreation() {
-        ItemDto itemWithNullNameEmptyDescriptionAndNullAvailable = new ItemDto(null, "   ", null);
+    void validateItemForCreation() {
+        ItemDto itemWithNullNameEmptyDescriptionAndNullAvailable = new ItemDto(null, "   ", null, null, null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
-                () -> ItemValidator.validateForCreation(itemWithNullNameEmptyDescriptionAndNullAvailable));
+                () -> ItemValidator.validateItemForCreation(itemWithNullNameEmptyDescriptionAndNullAvailable));
         assertEquals(3, fieldValidationException.getFieldViolations().size());
         assertTrue(fieldValidationException.getFieldViolations().contains(
                 new FieldViolation("Item.name", "must not be null")
@@ -25,9 +25,9 @@ class ItemValidatorTest {
                 new FieldViolation("Item.available", "must not be null")
         ));
 
-        ItemDto itemWithEmptyNameNullDescriptionAndProperAvailable = new ItemDto("", null, true);
+        ItemDto itemWithEmptyNameNullDescriptionAndProperAvailable = new ItemDto("", null, true, null, null);
         fieldValidationException = assertThrows(FieldValidationException.class,
-                () -> ItemValidator.validateForCreation(itemWithEmptyNameNullDescriptionAndProperAvailable));
+                () -> ItemValidator.validateItemForCreation(itemWithEmptyNameNullDescriptionAndProperAvailable));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
         assertTrue(fieldValidationException.getFieldViolations().contains(
                 new FieldViolation("Item.name", "must not be empty")
@@ -36,20 +36,20 @@ class ItemValidatorTest {
                 new FieldViolation("Item.description", "must not be null")
         ));
 
-        ItemDto properItem = new ItemDto("properName", "properDescription", true);
-        assertDoesNotThrow(() -> ItemValidator.validateForCreation(properItem));
+        ItemDto properItem = new ItemDto("properName", "properDescription", true, null, null);
+        assertDoesNotThrow(() -> ItemValidator.validateItemForCreation(properItem));
     }
 
     @Test
-    void validateForUpdating() {
-        ItemDto itemWithNullNameNullDescriptionAndNullAvailable = new ItemDto(null, null, null);
+    void validateItemForUpdating() {
+        ItemDto itemWithNullNameNullDescriptionAndNullAvailable = new ItemDto(null, null, null, null, null);
         EmptyObjectException emptyObjectException = assertThrows(EmptyObjectException.class,
-                () -> ItemValidator.validateForUpdating(itemWithNullNameNullDescriptionAndNullAvailable));
+                () -> ItemValidator.validateItemForUpdating(itemWithNullNameNullDescriptionAndNullAvailable));
         assertEquals("Updated item must have at least one not null field", emptyObjectException.getMessage());
 
-        ItemDto itemWithEmptyNameEmptyDescriptionAndNullAvailable = new ItemDto("   ", "", null);
+        ItemDto itemWithEmptyNameEmptyDescriptionAndNullAvailable = new ItemDto("   ", "", null, null, null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
-                () -> ItemValidator.validateForUpdating(itemWithEmptyNameEmptyDescriptionAndNullAvailable));
+                () -> ItemValidator.validateItemForUpdating(itemWithEmptyNameEmptyDescriptionAndNullAvailable));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
         assertTrue(fieldValidationException.getFieldViolations().contains(
                 new FieldViolation("Item.name", "must not be empty")
@@ -58,16 +58,16 @@ class ItemValidatorTest {
                 new FieldViolation("Item.description", "must not be empty")
         ));
 
-        ItemDto properItemWithNotNullName = new ItemDto("properName", null, null);
-        assertDoesNotThrow(() -> ItemValidator.validateForUpdating(properItemWithNotNullName));
+        ItemDto properItemWithNotNullName = new ItemDto("properName", null, null, null, null);
+        assertDoesNotThrow(() -> ItemValidator.validateItemForUpdating(properItemWithNotNullName));
 
-        ItemDto properItemWithNotNullDescription = new ItemDto(null, "properDescription", null);
-        assertDoesNotThrow(() -> ItemValidator.validateForUpdating(properItemWithNotNullDescription));
+        ItemDto properItemWithNotNullDescription = new ItemDto(null, "properDescription", null, null, null);
+        assertDoesNotThrow(() -> ItemValidator.validateItemForUpdating(properItemWithNotNullDescription));
 
-        ItemDto properItemWithNotNullAvailable = new ItemDto(null, null, true);
-        assertDoesNotThrow(() -> ItemValidator.validateForUpdating(properItemWithNotNullAvailable));
+        ItemDto properItemWithNotNullAvailable = new ItemDto(null, null, true, null, null);
+        assertDoesNotThrow(() -> ItemValidator.validateItemForUpdating(properItemWithNotNullAvailable));
 
-        ItemDto properItemWithNoNullFields = new ItemDto("properName", "properDescription", true);
-        assertDoesNotThrow(() -> ItemValidator.validateForUpdating(properItemWithNoNullFields));
+        ItemDto properItemWithNoNullFields = new ItemDto("properName", "properDescription", true, null, null);
+        assertDoesNotThrow(() -> ItemValidator.validateItemForUpdating(properItemWithNoNullFields));
     }
 }

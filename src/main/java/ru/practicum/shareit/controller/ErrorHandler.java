@@ -41,7 +41,11 @@ public class ErrorHandler {
             HttpMessageNotReadableException.class,
             MethodArgumentTypeMismatchException.class,
             MissingRequestHeaderException.class,
-            MissingServletRequestParameterException.class
+            MissingServletRequestParameterException.class,
+            NotAvailableItemException.class,
+            CanNotUpdateBookingStatus.class,
+            UnsupportedStateException.class,
+            PostingCommentWithoutCompletedBookingException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestError(Throwable exception) {
@@ -56,9 +60,9 @@ public class ErrorHandler {
         return new ErrorResponse(exception.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler ({EmailIsAlreadyInUseException.class, BookingDatesIntersectWithAlreadyExistingBookingException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handlePuttingConflictingDataError(EmailIsAlreadyInUseException exception) {
+    public ErrorResponse handlePuttingConflictingDataError(Throwable exception) {
         log.warn("Request on putting object conflicting with already existing objects has been received\n{}",
                 exception.getMessage());
         return new ErrorResponse(exception.getMessage());

@@ -4,11 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static ru.practicum.shareit.item.ItemValidator.*;
+import static ru.practicum.shareit.item.CommentValidator.*;
 
 @RestController
 @RequestMapping("/items")
@@ -24,9 +27,9 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItemById(@PathVariable Long id) {
-        log.info("Request on getting item with id = {} has been received", id);
-        return itemService.getItemById(id);
+    public ItemDto getItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("Request on getting item with id = {} by user with id = {} has been received", id, userId);
+        return itemService.getItemById(id, userId);
     }
 
     @GetMapping
@@ -44,7 +47,7 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        validateForCreation(itemDto);
+        validateItemForCreation(itemDto);
         return itemService.createItem(itemDto, ownerId);
     }
 
@@ -59,13 +62,13 @@ public class ItemController {
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId);
-        validateForUpdating(itemDto);
+        validateItemForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);
     }
 
     @DeleteMapping("/{id}")
     public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on deleting item with id = {} by user with id = {} ahs been received", id, ownerId);
+        log.info("Request on deleting item with id = {} by user with id = {} has been received", id, ownerId);
         return itemService.deleteItemById(id, ownerId);
     }
 
@@ -79,5 +82,18 @@ public class ItemController {
     public List<ItemDto> searchItems(@RequestParam("text") String query) {
         log.info("Request on getting items by searchQuery = \"{}\" has been received", query);
         return itemService.searchItems(query.toLowerCase());
+    }
+
+    @PostMapping("/{id}/comment")
+    public CommentDto createComment(@RequestBody CommentDto commentDto,
+                                    @PathVariable("id") Long itemId,
+                                    @RequestHeader("X-Sharer-User-Id") Long authorId) {
+        log.info("Request on posting comment with text = {}" +
+                "\non item with id = {}\nfrom user with id = {} has been received",
+                commentDto.getText(),
+                itemId,
+                authorId);
+        validateCommentDto(commentDto);
+        return itemService.createComment(commentDto, itemId, authorId, LocalDateTime.now());
     }
 }

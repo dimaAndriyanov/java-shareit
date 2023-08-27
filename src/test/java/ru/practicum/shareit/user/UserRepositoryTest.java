@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Setter
 abstract class UserRepositoryTest {
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @BeforeEach
     void clearUserRepository() {
