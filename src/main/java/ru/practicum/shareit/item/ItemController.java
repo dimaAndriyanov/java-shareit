@@ -3,10 +3,13 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +20,7 @@ import static ru.practicum.shareit.item.CommentValidator.*;
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class ItemController {
     private final ItemService itemService;
 
@@ -33,9 +37,12 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on getting all items of user with id = {} has been received", ownerId);
-        return itemService.getAllItemsByOwnerId(ownerId);
+    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                              @RequestParam(required = false) @PositiveOrZero Integer from,
+                                              @RequestParam(required = false) @Positive Integer size) {
+        log.info("Request on getting all items of user with id = {} " +
+                "with page parameters from = {} and size = {} has been received", ownerId, from, size);
+        return itemService.getAllItemsByOwnerId(ownerId, from == null ? 0 : from, size == null ? 10 : size);
     }
 
     @PostMapping
@@ -79,9 +86,12 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam("text") String query) {
-        log.info("Request on getting items by searchQuery = \"{}\" has been received", query);
-        return itemService.searchItems(query.toLowerCase());
+    public List<ItemDto> searchItems(@RequestParam("text") String query,
+                                     @RequestParam(required = false) @PositiveOrZero Integer from,
+                                     @RequestParam(required = false) @Positive Integer size) {
+        log.info("Request on getting items by searchQuery = \"{}\" " +
+                "with page parameters from = {} and size = {} has been received", query, from, size);
+        return itemService.searchItems(query.toLowerCase(), from == null ? 0 : from, size == null ? 10 : size);
     }
 
     @PostMapping("/{id}/comment")

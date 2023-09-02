@@ -40,7 +40,10 @@ public class ItemValidator {
     }
 
     public void validateItemForUpdating(ItemDto itemDto) {
-        if (itemDto.getName() == null && itemDto.getDescription() == null && itemDto.getAvailable() == null) {
+        if (itemDto.getName() == null &&
+                itemDto.getDescription() == null &&
+                itemDto.getAvailable() == null &&
+                itemDto.getRequestId() == null) {
             throw new EmptyObjectException("Updated item must have at least one not null field");
         }
 

@@ -15,6 +15,7 @@ public class ItemDto {
     private final BookingInfo lastBooking;
     private final BookingInfo nextBooking;
     private final List<CommentDto> comments = new ArrayList<>();
+    private final Long requestId;
 
     public void addCommentDto(CommentDto commentDto) {
         comments.add(commentDto);

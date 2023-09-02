@@ -14,11 +14,11 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class UserRepositoryDbImpl implements UserRepository {
-    private final UserDbInterface userDbInterface;
+    private final UserRepositoryDbInterface userRepositoryDbInterface;
 
     @Override
     public List<User> getAll() {
-        return userDbInterface.findAll();
+        return userRepositoryDbInterface.findAll();
     }
 
     @Override
@@ -26,7 +26,7 @@ public class UserRepositoryDbImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        return userDbInterface.findById(id).get();
+        return userRepositoryDbInterface.findById(id).get();
     }
 
     @Override
@@ -36,7 +36,7 @@ public class UserRepositoryDbImpl implements UserRepository {
         }
         try {
             user.setNullId();
-            User result = userDbInterface.save(user);
+            User result = userRepositoryDbInterface.save(user);
             log.info("New user with id {} has been created", user.getId());
             return result;
         } catch (DataIntegrityViolationException exception) {
@@ -52,14 +52,14 @@ public class UserRepositoryDbImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        User oldUser = userDbInterface.findById(id).get();
+        User oldUser = userRepositoryDbInterface.findById(id).get();
         User updatedUser = new User(
                 user.getName() != null ? user.getName() : oldUser.getName(),
                 user.getEmail() != null ? user.getEmail() : oldUser.getEmail()
         );
         updatedUser.setId(id);
         try {
-            User result = userDbInterface.saveAndFlush(updatedUser);
+            User result = userRepositoryDbInterface.saveAndFlush(updatedUser);
             log.info("User with id {} has been updated", result.getId());
             return result;
         }  catch (DataIntegrityViolationException exception) {
@@ -72,15 +72,15 @@ public class UserRepositoryDbImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        User deletedUser = userDbInterface.findById(id).get();
-        userDbInterface.deleteById(id);
+        User deletedUser = userRepositoryDbInterface.findById(id).get();
+        userRepositoryDbInterface.deleteById(id);
         log.info("User with id {} has been deleted", deletedUser.getId());
         return deletedUser;
     }
 
     @Override
     public void deleteAll() {
-        userDbInterface.deleteAll();
+        userRepositoryDbInterface.deleteAll();
         log.info("All users has been deleted");
     }
 
@@ -89,7 +89,7 @@ public class UserRepositoryDbImpl implements UserRepository {
         if (id == null) {
             throw new NullPointerException("Id must not be null");
         }
-        if (userDbInterface.findById(id).isEmpty()) {
+        if (userRepositoryDbInterface.findById(id).isEmpty()) {
             throw new ObjectNotFoundException(String.format("User with id = %s not found", id));
         }
     }

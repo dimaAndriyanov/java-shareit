@@ -49,7 +49,7 @@ class BookingServiceImplTest {
     }
 
     ItemDto setItem(String name, String description, Boolean available, Long ownerId) {
-        return itemService.createItem(new ItemDto(name, description, available, null, null), ownerId);
+        return itemService.createItem(new ItemDto(name, description, available, null, null, null), ownerId);
     }
 
     SentBookingDto setBooking(Long itemId, Long userId, List<LocalDateTime> dates) {
@@ -99,31 +99,32 @@ class BookingServiceImplTest {
         booking3 = bookingService.updateBookingStatus(booking3.getId(), users.get(1).getId(), true);
 
         List<SentBookingDto> foundBookings =
-                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(0).getId());
+                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(0).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(2).getId(), 0, 10);
         assertEquals(2, foundBookings.size());
         assertEquals(Set.of(booking2.getId(), booking3.getId()),
                 foundBookings.stream().map(SentBookingDto::getId).collect(Collectors.toSet()));
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.REJECTED, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.REJECTED,
+                users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.PAST, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.PAST, users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.CURRENT, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.CURRENT, users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking3.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.FUTURE, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.FUTURE, users.get(2).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
     }
 
@@ -144,31 +145,31 @@ class BookingServiceImplTest {
         booking3 = bookingService.updateBookingStatus(booking3.getId(), users.get(1).getId(), true);
 
         List<SentBookingDto> foundBookings =
-                bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(0).getId());
+                bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(0).getId(), 0, 10);
         assertEquals(2, foundBookings.size());
         assertEquals(Set.of(booking1.getId(), booking2.getId()),
                 foundBookings.stream().map(SentBookingDto::getId).collect(Collectors.toSet()));
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.FUTURE, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.FUTURE, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.WAITING, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.WAITING, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.PAST, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.PAST, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.CURRENT, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.CURRENT, users.get(0).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(1).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(1).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking3.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(2).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
     }
 
@@ -202,7 +203,8 @@ class BookingServiceImplTest {
                 List.of(now.plusHours(1), now.plusDays(1)));
         assertNotNull(successfulBooking.getId());
         assertEquals(
-                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId()).get(0).getId(),
+                bookingService.getBookingsByStateAndBookerId(BookingState.ALL,
+                        users.get(1).getId(), 0, 10).get(0).getId(),
                 successfulBooking.getId());
         assertNotNull(successfulBooking.getStatus());
         assertEquals(BookingStatus.WAITING, successfulBooking.getStatus());

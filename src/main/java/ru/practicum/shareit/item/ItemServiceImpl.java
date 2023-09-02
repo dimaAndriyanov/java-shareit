@@ -11,11 +11,14 @@ import ru.practicum.shareit.booking.dto.BookingInfo;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.exception.DataAccessException;
+import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.exception.PostingCommentWithoutCompletedBookingException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
@@ -35,6 +38,8 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+
+    private final ItemRequestRepository itemRequestRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -62,9 +67,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDto> getAllItemsByOwnerId(Long ownerId) {
+    public List<ItemDto> getAllItemsByOwnerId(Long ownerId, Integer from , Integer size) {
         userRepository.checkForPresenceById(ownerId);
-        List<Item> foundItems = itemRepository.getAllByOwnerId(ownerId);
+        List<Item> foundItems = itemRepository.getAllByOwnerId(ownerId, from, size);
         List<Long> foundItemsIds = foundItems.stream().map(Item::getId).collect(Collectors.toList());
         List<Booking> bookings = bookingRepository.findAllByItemIdOrderByStart(foundItemsIds);
         Map<Long, List<Booking>> bookingsByItemIds = new HashMap<>();
@@ -96,7 +101,8 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public ItemDto createItem(ItemDto itemDto, Long ownerId) {
         userRepository.checkForPresenceById(ownerId);
-        return toItemDto(itemRepository.create(toItem(itemDto, userRepository.getById(ownerId))), null, null);
+        Item item = getItemWithItemRequest(itemDto, ownerId);
+        return toItemDto(itemRepository.create(item), null, null);
     }
 
     @Override
@@ -105,7 +111,8 @@ public class ItemServiceImpl implements ItemService {
         userRepository.checkForPresenceById(ownerId);
         itemRepository.checkForPresenceById(id);
         checkForDataAccessRights(id, ownerId, "Can not update someone else's item");
-        return toItemDto(itemRepository.update(toItem(itemDto, userRepository.getById(ownerId)), id), null, null);
+        Item item = getItemWithItemRequest(itemDto, ownerId);
+        return toItemDto(itemRepository.update(item, id), null, null);
     }
 
     @Override
@@ -125,8 +132,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDto> searchItems(String query) {
-        return toItemDto(itemRepository.searchItems(query));
+    public List<ItemDto> searchItems(String query, Integer from, Integer size) {
+        return toItemDto(itemRepository.searchItems(query, from, size));
     }
 
     @Override
@@ -174,5 +181,21 @@ public class ItemServiceImpl implements ItemService {
 
     private void addCommentsToItemDto(ItemDto itemDto, List<CommentDto> commentsDto) {
         commentsDto.forEach(itemDto::addCommentDto);
+    }
+
+    private Item getItemWithItemRequest(ItemDto itemDto, Long ownerId) {
+        Item item;
+        if (itemDto.getRequestId() == null) {
+            item = toItem(itemDto, userRepository.getById(ownerId), null);
+        } else {
+            Optional<ItemRequest> possibleItemRequest = itemRequestRepository.findById(itemDto.getRequestId());
+            if (possibleItemRequest.isPresent()) {
+                item = toItem(itemDto, userRepository.getById(ownerId), possibleItemRequest.get());
+            } else {
+                throw new ObjectNotFoundException(
+                        String.format("Item request with id = %s not found", itemDto.getRequestId()));
+            }
+        }
+        return item;
     }
 }

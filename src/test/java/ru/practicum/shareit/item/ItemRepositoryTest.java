@@ -30,14 +30,14 @@ abstract class ItemRepositoryTest {
     }
 
     Item createOneItem(String name, String description, Boolean available, User owner) {
-        return itemRepository.create(new Item(name, description, available, owner));
+        return itemRepository.create(new Item(name, description, available, owner, null));
     }
 
     List<Item> createThreeItems(User owner) {
         return new ArrayList<>(List.of(
-                itemRepository.create(new Item("Car", "Very fast!", true, owner)),
-                itemRepository.create(new Item("Hammer", "Very strong!", false, owner)),
-                itemRepository.create(new Item("Skis", "New!", true, owner))));
+                itemRepository.create(new Item("Car", "Very fast!", true, owner, null)),
+                itemRepository.create(new Item("Hammer", "Very strong!", false, owner, null)),
+                itemRepository.create(new Item("Skis", "New!", true, owner, null))));
     }
 
     @Transactional
@@ -123,9 +123,9 @@ abstract class ItemRepositoryTest {
         // Tests on updating item catalogue
         clearRepositories();
 
-        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
-        List<Item> searchForDrill = itemRepository.searchItems("drill");
-        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        List<Item> searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        List<Item> searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertTrue(searchForScrewdriver.isEmpty());
         assertTrue(searchForDrill.isEmpty());
@@ -134,9 +134,9 @@ abstract class ItemRepositoryTest {
         User newUser = createOneUser("newUserName", "newUserEmail");
         Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, newUser);
         Item notAvailableDrill = createOneItem("Battery drill", "Works on batteries", false, newUser);
-        searchForScrewdriver = itemRepository.searchItems("screw");
-        searchForDrill = itemRepository.searchItems("drill");
-        searchForBattery = itemRepository.searchItems("batt");
+        searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertEquals(1, searchForScrewdriver.size());
         assertTrue(searchForScrewdriver.contains(availableScrewdriver));
@@ -154,7 +154,7 @@ abstract class ItemRepositoryTest {
 
         nullPointerException = assertThrows(NullPointerException.class,
                 () -> itemRepository.update(
-                        new Item("SnowBoard", "Slightly used", true, new User("name", "email")),
+                        new Item("SnowBoard", "Slightly used", true, new User("name", "email"), null),
                         null
                 ));
         assertEquals("Id must not be null", nullPointerException.getMessage());
@@ -164,7 +164,7 @@ abstract class ItemRepositoryTest {
         addedItems.add(createOneItem("Snowboard", "Three years old", false, user));
 
         Item carWithUpdatedName = itemRepository.update(
-                new Item("Electric car", null, null, user),
+                new Item("Electric car", null, null, user, null),
                 addedItems.get(0).getId()
         );
 
@@ -177,7 +177,7 @@ abstract class ItemRepositoryTest {
                 itemRepository.getById(addedItems.get(0).getId()).getAvailable());
 
         Item hammerWithUpdatedDescription = itemRepository.update(
-                new Item(null, "Steel, very heavy", null, user),
+                new Item(null, "Steel, very heavy", null, user, null),
                 addedItems.get(1).getId()
         );
 
@@ -189,7 +189,7 @@ abstract class ItemRepositoryTest {
                 itemRepository.getById(addedItems.get(1).getId()).getAvailable());
 
         Item notAvailableSkis = itemRepository.update(
-                new Item(null, null, false, user),
+                new Item(null, null, false, user, null),
                 addedItems.get(2).getId()
         );
 
@@ -201,7 +201,7 @@ abstract class ItemRepositoryTest {
                 itemRepository.getById(addedItems.get(2).getId()).getAvailable());
 
         itemRepository.update(
-                new Item("Burton Blossom Camber Snowboard", "Park snowboard", true, user),
+                new Item("Burton Blossom Camber Snowboard", "Park snowboard", true, user, null),
                 addedItems.get(3).getId()
         );
 
@@ -218,9 +218,9 @@ abstract class ItemRepositoryTest {
         User newUser = createOneUser("newUserName", "newUserEmail");
         Item availableScrewdriver = createOneItem("Screwdriver", "New", true, newUser);
         Item notAvailableDrill = createOneItem("Battery drill", "New", false, newUser);
-        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
-        List<Item> searchForDrill = itemRepository.searchItems("drill");
-        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        List<Item> searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        List<Item> searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertEquals(1, searchForScrewdriver.size());
         assertTrue(searchForScrewdriver.contains(availableScrewdriver));
@@ -228,16 +228,16 @@ abstract class ItemRepositoryTest {
         assertTrue(searchForBattery.isEmpty());
 
         Item stillAvailableScrewdriver = itemRepository.update(
-                new Item(null, "Works on batteries", null, newUser),
+                new Item(null, "Works on batteries", null, newUser, null),
                 availableScrewdriver.getId()
         );
         Item stillNotAvailableDrill = itemRepository.update(
-                new Item(null, "Works on batteries", null, newUser),
+                new Item(null, "Works on batteries", null, newUser, null),
                 notAvailableDrill.getId()
         );
-        searchForScrewdriver = itemRepository.searchItems("screw");
-        searchForDrill = itemRepository.searchItems("drill");
-        searchForBattery = itemRepository.searchItems("batt");
+        searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertEquals(1, searchForScrewdriver.size());
         assertTrue(searchForScrewdriver.contains(stillAvailableScrewdriver));
@@ -247,16 +247,16 @@ abstract class ItemRepositoryTest {
         assertFalse(searchForBattery.contains(stillNotAvailableDrill));
 
         Item nowNotAvailableScrewdriver = itemRepository.update(
-                new Item(null, null, false, newUser),
+                new Item(null, null, false, newUser, null),
                 availableScrewdriver.getId()
         );
         Item nowAvailableDrill = itemRepository.update(
-                new Item(null, null, true, newUser),
+                new Item(null, null, true, newUser, null),
                 notAvailableDrill.getId()
         );
-        searchForScrewdriver = itemRepository.searchItems("screw");
-        searchForDrill = itemRepository.searchItems("drill");
-        searchForBattery = itemRepository.searchItems("batt");
+        searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertTrue(searchForScrewdriver.isEmpty());
         assertEquals(1, searchForDrill.size());
@@ -290,9 +290,9 @@ abstract class ItemRepositoryTest {
         User newUser = createOneUser("newUserName", "newUserEmail");
         Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, newUser);
         Item notAvailableDrill = createOneItem("Battery drill", "New", false, newUser);
-        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
-        List<Item> searchForDrill = itemRepository.searchItems("drill");
-        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        List<Item> searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        List<Item> searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertEquals(1, searchForScrewdriver.size());
         assertTrue(searchForScrewdriver.contains(availableScrewdriver));
@@ -303,9 +303,9 @@ abstract class ItemRepositoryTest {
 
         itemRepository.deleteById(availableScrewdriver.getId());
         itemRepository.deleteById(notAvailableDrill.getId());
-        searchForScrewdriver = itemRepository.searchItems("screw");
-        searchForDrill = itemRepository.searchItems("drill");
-        searchForBattery = itemRepository.searchItems("batt");
+        searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
+        searchForDrill = itemRepository.searchItems("drill", 0, 10);
+        searchForBattery = itemRepository.searchItems("batt", 0, 10);
 
         assertTrue(searchForScrewdriver.isEmpty());
         assertTrue(searchForDrill.isEmpty());
@@ -340,13 +340,13 @@ abstract class ItemRepositoryTest {
         Item notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, newUser);
         List<Item> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
 
-        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        List<Item> searchForBattery = itemRepository.searchItems("batt", 0, 10);
         assertEquals(3, searchForBattery.size());
         availableItems.forEach(item -> assertTrue(searchForBattery.contains(item)));
         notAvailableItems.forEach(item -> assertFalse(searchForBattery.contains(item)));
 
         itemRepository.deleteAll();
-        List<Item> searchForBatteryAfterDeletingAllItems = itemRepository.searchItems("batt");
+        List<Item> searchForBatteryAfterDeletingAllItems = itemRepository.searchItems("batt", 0, 10);
         assertTrue(searchForBatteryAfterDeletingAllItems.isEmpty());
     }
 
@@ -389,14 +389,14 @@ abstract class ItemRepositoryTest {
 
         List<Item> availableItems = List.of(availableUsersScrewdriver, availableOtherUsersToyCar);
         List<Item> notAvailableItems = List.of(notAvailableUsersDrill, notAvailableOtherUsersToyHelicopter);
-        List<Item> searchForBatteries = itemRepository.searchItems("batt");
+        List<Item> searchForBatteries = itemRepository.searchItems("batt", 0, 10);
 
         assertEquals(2, searchForBatteries.size());
         availableItems.forEach(item -> assertTrue(searchForBatteries.contains(item)));
         notAvailableItems.forEach(item -> assertFalse(searchForBatteries.contains(item)));
 
         itemRepository.deleteAllByOwnerId(newOtherUser.getId());
-        List<Item> newSearchForBatteries = itemRepository.searchItems("batt");
+        List<Item> newSearchForBatteries = itemRepository.searchItems("batt", 0, 10);
         assertEquals(1, newSearchForBatteries.size());
         assertTrue(newSearchForBatteries.contains(availableUsersScrewdriver));
         assertFalse(newSearchForBatteries.contains(availableOtherUsersToyCar));
@@ -416,33 +416,33 @@ abstract class ItemRepositoryTest {
         Item notAvailableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", false, user);
         List<Item> notAvailableItems = List.of(notAvailableScrewdriver, notAvailableDrill, notAvailableToyCar);
 
-        List<Item> searchForScrewdriver = itemRepository.searchItems("screw");
+        List<Item> searchForScrewdriver = itemRepository.searchItems("screw", 0, 10);
         assertNotNull(searchForScrewdriver);
         assertEquals(1, searchForScrewdriver.size());
         assertTrue(searchForScrewdriver.contains(availableScrewdriver));
         assertFalse(searchForScrewdriver.contains(notAvailableScrewdriver));
 
-        List<Item> searchForIncluded = itemRepository.searchItems("included");
+        List<Item> searchForIncluded = itemRepository.searchItems("included", 0, 10);
         assertNotNull(searchForIncluded);
         assertEquals(1, searchForIncluded.size());
         assertTrue(searchForIncluded.contains(availableToyCar));
         assertFalse(searchForIncluded.contains(notAvailableToyCar));
 
-        List<Item> searchForBattery = itemRepository.searchItems("batt");
+        List<Item> searchForBattery = itemRepository.searchItems("batt", 0, 10);
         assertNotNull(searchForBattery);
         assertEquals(3, searchForBattery.size());
         availableItems.forEach(item -> assertTrue(searchForBattery.contains(item)));
         notAvailableItems.forEach(item -> assertFalse(searchForBattery.contains(item)));
 
-        List<Item> searchForSnowboard = itemRepository.searchItems("snowboard");
+        List<Item> searchForSnowboard = itemRepository.searchItems("snowboard", 0, 10);
         assertNotNull(searchForSnowboard);
         assertTrue(searchForSnowboard.isEmpty());
 
-        List<Item> searchForNothing = itemRepository.searchItems("");
+        List<Item> searchForNothing = itemRepository.searchItems("", 0, 10);
         assertNotNull(searchForNothing);
         assertTrue(searchForNothing.isEmpty());
 
-        searchForNothing = itemRepository.searchItems("   ");
+        searchForNothing = itemRepository.searchItems("   ", 0, 10);
         assertNotNull(searchForNothing);
         assertTrue(searchForNothing.isEmpty());
     }

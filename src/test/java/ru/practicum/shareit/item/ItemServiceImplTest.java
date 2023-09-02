@@ -45,10 +45,10 @@ class ItemServiceImplTest {
 
     List<ItemDto> setItems(List<UserDto> users) {
         return List.of(
-                itemService.createItem(new ItemDto("name1", "desc1", true, null, null), users.get(0).getId()),
-                itemService.createItem(new ItemDto("name2", "desc2", true, null, null), users.get(0).getId()),
-                itemService.createItem(new ItemDto("name3", "desc3", true, null, null), users.get(0).getId()),
-                itemService.createItem(new ItemDto("name4", "desc3", true, null, null), users.get(0).getId())
+                itemService.createItem(new ItemDto("name1", "desc1", true, null, null, null), users.get(0).getId()),
+                itemService.createItem(new ItemDto("name2", "desc2", true, null, null, null), users.get(0).getId()),
+                itemService.createItem(new ItemDto("name3", "desc3", true, null, null, null), users.get(0).getId()),
+                itemService.createItem(new ItemDto("name4", "desc3", true, null, null, null), users.get(0).getId())
         );
     }
 
@@ -158,7 +158,7 @@ class ItemServiceImplTest {
         List<SentBookingDto> bookings = setBookings(users, items);
         List<CommentDto> comments = setComments(users, items);
 
-        List<ItemDto> foundItems = itemService.getAllItemsByOwnerId(users.get(0).getId());
+        List<ItemDto> foundItems = itemService.getAllItemsByOwnerId(users.get(0).getId(), 0, 10);
         ItemDto item1 = foundItems.stream().filter(item -> item.getId().equals(items.get(0).getId())).findAny().get();
         ItemDto item2 = foundItems.stream().filter(item -> item.getId().equals(items.get(1).getId())).findAny().get();
         ItemDto item3 = foundItems.stream().filter(item -> item.getId().equals(items.get(2).getId())).findAny().get();
@@ -197,7 +197,7 @@ class ItemServiceImplTest {
         UserDto owner = userService.createUser(new UserDto("user1", "email1@mail.com"));
         UserDto commentAuthor = userService.createUser(new UserDto("user2", "email2@mail.com"));
 
-        ItemDto item = itemService.createItem(new ItemDto("name1", "desc1", true, null, null), owner.getId());
+        ItemDto item = itemService.createItem(new ItemDto("name1", "desc1", true, null, null, null), owner.getId());
 
         PostingCommentWithoutCompletedBookingException postingCommentException = assertThrows(
                 PostingCommentWithoutCompletedBookingException.class,

@@ -43,6 +43,11 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
     }
 
     @Override
+    public List<Item> getAllByOwnerId(Long ownerId, Integer from, Integer size) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Item create(Item item) {
         if (item == null) {
             throw new NullPointerException("Can not create null item");
@@ -69,7 +74,8 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
                 item.getName() != null ? item.getName() : items.get(id).getName(),
                 item.getDescription() != null ? item.getDescription() : items.get(id).getDescription(),
                 item.getAvailable() != null ? item.getAvailable() : items.get(id).getAvailable(),
-                items.get(id).getOwner()
+                items.get(id).getOwner(),
+                item.getItemRequest() != null ? item.getItemRequest() : items.get(id).getItemRequest()
         );
         updatedItem.setId(id);
         items.put(updatedItem.getId(), updatedItem);
@@ -111,7 +117,7 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
     }
 
     @Override
-    public List<Item> searchItems(String query) {
+    public List<Item> searchItems(String query, Integer from, Integer size) {
         if (query.isBlank()) {
             return List.of();
         }
@@ -134,6 +140,16 @@ public class ItemRepositoryInMemoryImpl implements ItemRepository {
         if (!items.containsKey(id)) {
             throw new ObjectNotFoundException(String.format("Item with id = %s not found", id));
         }
+    }
+
+    @Override
+    public List<Item> getAllItemsByRequestId(Long requestId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Item> getAllItemsByRequestIds(List<Long> requestIds) {
+        throw new UnsupportedOperationException();
     }
 
     private Long getNextId() {

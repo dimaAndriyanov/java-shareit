@@ -11,6 +11,8 @@ public interface ItemRepository {
 
     List<Item> getAllByOwnerId(Long ownerId);
 
+    List<Item> getAllByOwnerId(Long ownerId, Integer from, Integer size);
+
     Item create(Item item);
 
     Item update(Item item, Long id);
@@ -21,7 +23,11 @@ public interface ItemRepository {
 
     void deleteAllByOwnerId(Long ownerId);
 
-    List<Item> searchItems(String query);
+    List<Item> searchItems(String query, Integer from, Integer size);
 
     void checkForPresenceById(Long id);
+
+    List<Item> getAllItemsByRequestId(Long requestId);
+
+    List<Item> getAllItemsByRequestIds(List<Long> requestIds);
 }

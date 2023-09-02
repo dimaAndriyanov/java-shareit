@@ -12,7 +12,7 @@ public interface ItemService {
 
     ItemDto getItemById(Long id, Long userId);
 
-    List<ItemDto> getAllItemsByOwnerId(Long ownerId);
+    List<ItemDto> getAllItemsByOwnerId(Long ownerId, Integer from, Integer size);
 
     ItemDto createItem(ItemDto itemDto, Long ownerId);
 
@@ -22,7 +22,7 @@ public interface ItemService {
 
     void deleteAllItems();
 
-    List<ItemDto> searchItems(String query);
+    List<ItemDto> searchItems(String query, Integer from, Integer size);
 
     CommentDto createComment(CommentDto commentDto, Long itemId, Long authorId, LocalDateTime created);
 }

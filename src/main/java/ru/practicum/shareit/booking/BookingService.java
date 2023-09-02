@@ -9,9 +9,13 @@ import java.util.List;
 public interface BookingService {
     SentBookingDto getBookingByIdAndUserId(Long id, Long userId);
 
-    List<SentBookingDto> getBookingsByStateAndBookerId(BookingState bookingState, Long bookerId);
+    List<SentBookingDto> getBookingsByStateAndBookerId(
+            BookingState bookingState, Long bookerId, Integer from , Integer size
+    );
 
-    List<SentBookingDto> getBookingsByStateAndOwnerId(BookingState bookingState, Long ownerId);
+    List<SentBookingDto> getBookingsByStateAndOwnerId(
+            BookingState bookingState, Long ownerId, Integer from , Integer size
+    );
 
     SentBookingDto createBooking(Long itemId, Long bookerId, List<LocalDateTime> dates);
 
