@@ -33,7 +33,7 @@ class ItemControllerTest {
 
     private final MockMvc mvc;
 
-    private final static ItemDto item = new ItemDto(
+    private static final ItemDto item = new ItemDto(
             "itemName",
             "itemDescription",
             true,
@@ -42,7 +42,7 @@ class ItemControllerTest {
             17L
     );
 
-    private final static ItemDto itemWithComment = new ItemDto(
+    private static final ItemDto itemWithComment = new ItemDto(
             "itemWithCommentName",
             "itemWithCommentDescription",
             true,
@@ -51,7 +51,7 @@ class ItemControllerTest {
             17L
     );
 
-    private final static CommentDto comment = new CommentDto("text", "authorName", "2020-01-01T00:00:00");
+    private static final CommentDto comment = new CommentDto("text", "authorName", "2020-01-01T00:00:00");
 
     static {
         item.setId(42L);
