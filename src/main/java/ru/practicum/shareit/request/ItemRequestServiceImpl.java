@@ -65,7 +65,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDto createItemRequest(ItemRequestDto itemRequestDto, Long creatorId, LocalDateTime created) {
         userRepository.checkForPresenceById(creatorId);
         User creator = userRepository.getById(creatorId);
-        return toItemRequestDto(itemRequestRepository.save(toItemRequest(itemRequestDto, created, creator)));
+        ItemRequest result = itemRequestRepository.save(toItemRequest(itemRequestDto, created, creator));
+        log.info("Item request with id = {} has been created", result.getId());
+        return toItemRequestDto(result);
     }
 
     private void addItemsToRequestDto(ItemRequestDto itemRequestDto, List<ItemDto> itemsDto) {

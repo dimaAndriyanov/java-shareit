@@ -182,11 +182,17 @@ public class ItemRepositoryDbImpl implements ItemRepository {
 
     @Override
     public List<Item> getAllItemsByRequestId(Long requestId) {
+        if (requestId == null) {
+            throw new NullPointerException("Id must not be null");
+        }
         return itemRepositoryDbInterface.findAllByItemRequestId(requestId);
     }
 
     @Override
     public List<Item> getAllItemsByRequestIds(List<Long> requestIds) {
+        if (requestIds == null) {
+            throw new NullPointerException("Id list must not be null");
+        }
         return itemRepositoryDbInterface.findAllByItemRequestIdIn(requestIds);
     }
 

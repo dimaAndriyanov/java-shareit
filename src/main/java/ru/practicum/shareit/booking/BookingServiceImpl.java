@@ -14,7 +14,7 @@ import ru.practicum.shareit.booking.model.QBooking;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.exception.BookingDatesIntersectWithAlreadyExistingBookingException;
-import ru.practicum.shareit.exception.CanNotUpdateBookingStatus;
+import ru.practicum.shareit.exception.CanNotUpdateBookingStatusException;
 import ru.practicum.shareit.exception.NotAvailableItemException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -122,10 +122,10 @@ public class BookingServiceImpl implements BookingService {
             throw new ObjectNotFoundException("Can not update status of own booking");
         }
         if (!booking.get().getItem().getOwner().getId().equals(userId)) {
-            throw new CanNotUpdateBookingStatus("Can not update booking status if user is not item owner");
+            throw new CanNotUpdateBookingStatusException("Can not update booking status if user is not item owner");
         }
         if (booking.get().getStatus() == BookingStatus.APPROVED) {
-            throw new CanNotUpdateBookingStatus("Can not update status of already approved booking");
+            throw new CanNotUpdateBookingStatusException("Can not update status of already approved booking");
         }
         if (approved) {
             booking.get().setStatus(BookingStatus.APPROVED);

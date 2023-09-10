@@ -43,7 +43,7 @@ public class ErrorHandler {
             MissingRequestHeaderException.class,
             MissingServletRequestParameterException.class,
             NotAvailableItemException.class,
-            CanNotUpdateBookingStatus.class,
+            CanNotUpdateBookingStatusException.class,
             UnsupportedStateException.class,
             PostingCommentWithoutCompletedBookingException.class
     })

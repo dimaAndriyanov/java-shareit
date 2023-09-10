@@ -5,9 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,11 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 abstract class ItemRepositoryTest {
     private ItemRepository itemRepository;
     private UserRepository userRepository;
+    private ItemRequestRepository itemRequestRepository;
 
     @BeforeEach
     void clearRepositories() {
         itemRepository.deleteAll();
         userRepository.deleteAll();
+        itemRequestRepository.deleteAll();
     }
 
     User createOneUser(String name, String email) {
@@ -32,12 +37,23 @@ abstract class ItemRepositoryTest {
     Item createOneItem(String name, String description, Boolean available, User owner) {
         return itemRepository.create(new Item(name, description, available, owner, null));
     }
+    Item createOneItemWithRequest(String name, String description, User owner, ItemRequest request) {
+        return itemRepository.create(new Item(name, description, true, owner, request));
+    }
 
     List<Item> createThreeItems(User owner) {
         return new ArrayList<>(List.of(
                 itemRepository.create(new Item("Car", "Very fast!", true, owner, null)),
                 itemRepository.create(new Item("Hammer", "Very strong!", false, owner, null)),
                 itemRepository.create(new Item("Skis", "New!", true, owner, null))));
+    }
+
+    List<ItemRequest> createThreeRequests(User requestsAuthor) {
+        return List.of(
+                itemRequestRepository.save(new ItemRequest("description1", LocalDateTime.now(), requestsAuthor)),
+                itemRequestRepository.save(new ItemRequest("description2", LocalDateTime.now(), requestsAuthor)),
+                itemRequestRepository.save(new ItemRequest("description3", LocalDateTime.now(), requestsAuthor))
+        );
     }
 
     @Transactional
@@ -101,6 +117,33 @@ abstract class ItemRepositoryTest {
 
         assertEquals(4, savedUsersItems.size());
         assertEquals(new HashSet<>(addedUsersItems), new HashSet<>(savedUsersItems));
+    }
+
+    @Transactional
+    void getAllByOwnerIdPageable() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> itemRepository.getAllByOwnerId(null, 0, 10));
+        assertEquals("Owner id must not be null", nullPointerException.getMessage());
+
+        User user = createOneUser("userName", "userEmail");
+        createThreeItems(user);
+        List<Item> allSavedUsersItems = itemRepository.getAllByOwnerId(user.getId());
+
+        List<Item> pagedSavedUsersItems = itemRepository.getAllByOwnerId(user.getId(), 0, 1);
+        assertEquals(1, pagedSavedUsersItems.size());
+        assertTrue(allSavedUsersItems.contains(pagedSavedUsersItems.get(0)));
+
+        pagedSavedUsersItems = itemRepository.getAllByOwnerId(user.getId(), 1, 2);
+        assertEquals(2, pagedSavedUsersItems.size());
+        assertTrue(allSavedUsersItems.containsAll(pagedSavedUsersItems));
+
+        pagedSavedUsersItems = itemRepository.getAllByOwnerId(user.getId(), 2, 3);
+        System.out.println(pagedSavedUsersItems);
+        assertEquals(3, pagedSavedUsersItems.size());
+        assertTrue(allSavedUsersItems.containsAll(pagedSavedUsersItems));
+
+        pagedSavedUsersItems = itemRepository.getAllByOwnerId(user.getId(), 3, 3);
+        assertTrue(pagedSavedUsersItems.isEmpty());
     }
 
     @Transactional
@@ -448,6 +491,30 @@ abstract class ItemRepositoryTest {
     }
 
     @Transactional
+    void searchItemsPageable() {
+        User user = createOneUser("userName", "userEmail");
+        Item availableScrewdriver = createOneItem("Screwdriver", "Works on batteries", true, user);
+        Item availableDrill = createOneItem("Battery drill", "Works on batteries", true, user);
+        Item availableToyCar = createOneItem("RC toy car", "Batteries NOT INCLUDED", true, user);
+        List<Item> availableItems = List.of(availableScrewdriver, availableDrill, availableToyCar);
+
+        List<Item> searchForBatteryPageable = itemRepository.searchItems("batt", 0, 1);
+        assertEquals(1, searchForBatteryPageable.size());
+        assertTrue(availableItems.contains(searchForBatteryPageable.get(0)));
+
+        searchForBatteryPageable = itemRepository.searchItems("batt", 1, 2);
+        assertEquals(2, searchForBatteryPageable.size());
+        assertTrue(availableItems.containsAll(searchForBatteryPageable));
+
+        searchForBatteryPageable = itemRepository.searchItems("batt", 2, 3);
+        assertEquals(3, searchForBatteryPageable.size());
+        assertTrue(availableItems.containsAll(searchForBatteryPageable));
+
+        searchForBatteryPageable = itemRepository.searchItems("batt", 3, 3);
+        assertTrue(searchForBatteryPageable.isEmpty());
+    }
+
+    @Transactional
     void checkForPresenceById() {
         NullPointerException nullPointerException = assertThrows(NullPointerException.class,
                 () -> itemRepository.checkForPresenceById(null));
@@ -459,5 +526,78 @@ abstract class ItemRepositoryTest {
 
         List<Item> addedItems = createThreeItems(createOneUser("userName", "userEmail"));
         addedItems.forEach(item -> assertDoesNotThrow(() -> itemRepository.checkForPresenceById(item.getId())));
+    }
+
+    @Transactional
+    void getAllItemsByRequestId() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> itemRepository.getAllItemsByRequestId(null));
+        assertEquals("Id must not be null", nullPointerException.getMessage());
+
+        User requestsAuthor = createOneUser("requester", "requester@mail.com");
+        List<ItemRequest> requests = createThreeRequests(requestsAuthor);
+        User itemOwner = createOneUser("owner", "owner@mail.com");
+        Item itemWithNoRequest = createOneItem("item1", "desc1", true, itemOwner);
+        Item itemWithFirstRequest = createOneItemWithRequest("item2", "desc2", itemOwner, requests.get(0));
+        Item itemWithSecondRequest = createOneItemWithRequest("item3", "desc3", itemOwner, requests.get(1));
+        Item anotherItemWithFirstRequest = createOneItemWithRequest("item4", "desc4", itemOwner, requests.get(0));
+
+        List<Item> itemsByFirstRequest = itemRepository.getAllItemsByRequestId(requests.get(0).getId());
+        assertEquals(2, itemsByFirstRequest.size());
+        assertTrue(itemsByFirstRequest.contains(itemWithFirstRequest));
+        assertTrue(itemsByFirstRequest.contains(anotherItemWithFirstRequest));
+
+        List<Item> itemsBySecondRequest = itemRepository.getAllItemsByRequestId(requests.get(1).getId());
+        assertEquals(1, itemsBySecondRequest.size());
+        assertTrue(itemsBySecondRequest.contains(itemWithSecondRequest));
+
+        List<Item> itemsByThirdRequest = itemRepository.getAllItemsByRequestId(requests.get(2).getId());
+        assertTrue(itemsByThirdRequest.isEmpty());
+    }
+
+    @Transactional
+    void getAllItemsByRequestIds() {
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class,
+                () -> itemRepository.getAllItemsByRequestIds(null));
+        assertEquals("Id list must not be null", nullPointerException.getMessage());
+
+        User requestsAuthor = createOneUser("requester", "requester@mail.com");
+        List<ItemRequest> requests = createThreeRequests(requestsAuthor);
+        User itemOwner = createOneUser("owner", "owner@mail.com");
+        Item itemWithNoRequest = createOneItem("item1", "desc1", true, itemOwner);
+        Item itemWithFirstRequest = createOneItemWithRequest("item2", "desc2", itemOwner, requests.get(0));
+        Item itemWithSecondRequest = createOneItemWithRequest("item3", "desc3", itemOwner, requests.get(1));
+        Item anotherItemWithFirstRequest = createOneItemWithRequest("item4", "desc4", itemOwner, requests.get(0));
+
+        List<Item> itemsByEmptyRequestIdsList = itemRepository.getAllItemsByRequestIds(List.of());
+        assertTrue(itemsByEmptyRequestIdsList.isEmpty());
+
+        List<Item> itemsByFirstSecondAndThirdRequest = itemRepository.getAllItemsByRequestIds(
+                List.of(requests.get(0).getId(), requests.get(1).getId(), requests.get(2).getId())
+        );
+        assertEquals(3, itemsByFirstSecondAndThirdRequest.size());
+        assertTrue(itemsByFirstSecondAndThirdRequest.contains(itemWithFirstRequest));
+        assertTrue(itemsByFirstSecondAndThirdRequest.contains(itemWithSecondRequest));
+        assertTrue(itemsByFirstSecondAndThirdRequest.contains(anotherItemWithFirstRequest));
+
+        List<Item> itemsByFirstAndSecondRequest = itemRepository.getAllItemsByRequestIds(
+                List.of(requests.get(0).getId(), requests.get(1).getId())
+        );
+        assertEquals(3, itemsByFirstAndSecondRequest.size());
+        assertTrue(itemsByFirstAndSecondRequest.contains(itemWithFirstRequest));
+        assertTrue(itemsByFirstAndSecondRequest.contains(itemWithSecondRequest));
+        assertTrue(itemsByFirstAndSecondRequest.contains(anotherItemWithFirstRequest));
+
+        List<Item> itemsByFirstRequest = itemRepository.getAllItemsByRequestIds(
+                List.of(requests.get(0).getId())
+        );
+        assertEquals(2, itemsByFirstRequest.size());
+        assertTrue(itemsByFirstRequest.contains(itemWithFirstRequest));
+        assertTrue(itemsByFirstRequest.contains(anotherItemWithFirstRequest));
+
+        List<Item> itemsByThirdRequest = itemRepository.getAllItemsByRequestIds(
+                List.of(requests.get(2).getId())
+        );
+        assertTrue(itemsByThirdRequest.isEmpty());
     }
 }

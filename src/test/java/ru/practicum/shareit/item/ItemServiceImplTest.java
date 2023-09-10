@@ -6,9 +6,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.booking.BookingService;
 import ru.practicum.shareit.booking.dto.SentBookingDto;
+import ru.practicum.shareit.exception.DataAccessException;
+import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.exception.PostingCommentWithoutCompletedBookingException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.request.ItemRequestService;
+import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -27,12 +31,15 @@ class ItemServiceImplTest {
     private final ItemService itemService;
     private final UserService userService;
     private final BookingService bookingService;
+    private final ItemRequestService itemRequestService;
 
     @Autowired
-    ItemServiceImplTest(ItemService itemService, UserService userService, BookingService bookingService) {
+    ItemServiceImplTest(ItemService itemService, UserService userService,BookingService bookingService,
+                        ItemRequestService itemRequestService) {
         this.itemService = itemService;
         this.userService = userService;
         this.bookingService = bookingService;
+        this.itemRequestService = itemRequestService;
     }
 
     List<UserDto> setUsers() {
@@ -189,6 +196,85 @@ class ItemServiceImplTest {
         assertTrue(item3.getComments().isEmpty());
 
         assertTrue(item4.getComments().isEmpty());
+    }
+
+    @Test
+    void createItem() {
+        UserDto requester = userService.createUser(new UserDto("requester", "requester@mail.com"));
+        ItemRequestDto request = itemRequestService.createItemRequest(
+                new ItemRequestDto("desc", null), requester.getId(), LocalDateTime.now()
+        );
+        UserDto owner = userService.createUser(new UserDto("owner", "owner@mail.com"));
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> itemService.createItem(new ItemDto("item", "desc", true, null, null, 9999L), owner.getId()));
+        assertEquals("Item request with id = 9999 not found", objectNotFoundException.getMessage());
+
+        ItemDto itemNotByRequest = itemService.createItem(
+                new ItemDto("item1", "desc1", true, null, null, null), owner.getId()
+        );
+        assertNull(itemNotByRequest.getRequestId());
+
+        ItemDto itemByRequest = itemService.createItem(
+                new ItemDto("item2", "desc2", true, null, null, request.getId()), owner.getId()
+        );
+        assertNotNull(itemByRequest.getRequestId());
+        assertEquals(request.getId(), itemByRequest.getRequestId());
+    }
+
+    @Test
+    void updateItem() {
+        UserDto requester = userService.createUser(new UserDto("requester", "requester@mail.com"));
+        ItemRequestDto firstRequest = itemRequestService.createItemRequest(
+                new ItemRequestDto("desc1", null), requester.getId(), LocalDateTime.now()
+        );
+        ItemRequestDto secondRequest = itemRequestService.createItemRequest(
+                new ItemRequestDto("desc2", null), requester.getId(), LocalDateTime.now()
+        );
+        UserDto owner = userService.createUser(new UserDto("owner", "owner@mail.com"));
+        ItemDto itemNotByRequest = itemService.createItem(
+                new ItemDto("item1", "desc1", true, null, null, null), owner.getId()
+        );
+        ItemDto itemByFirstRequest = itemService.createItem(
+                new ItemDto("item2", "desc2", true, null, null, firstRequest.getId()), owner.getId()
+        );
+
+        DataAccessException dataAccessException = assertThrows(DataAccessException.class,
+                () -> itemService.updateItem(new ItemDto("updatedName1", "updatedDesc1", true, null, null, null),
+                        itemNotByRequest.getId(), requester.getId()));
+        assertEquals("Can not update someone else's item", dataAccessException.getMessage());
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> itemService.updateItem(new ItemDto("updatedName2", "updatedDesc2", true, null, null, 9999L),
+                        itemNotByRequest.getId(), owner.getId()));
+        assertEquals("Item request with id = 9999 not found", objectNotFoundException.getMessage());
+
+        ItemDto nowItemByFirstRequest = itemService.updateItem(
+                new ItemDto("updatedName3", "updatedDesc3", true, null, null, firstRequest.getId()),
+                itemNotByRequest.getId(), owner.getId()
+        );
+        assertNotNull(nowItemByFirstRequest.getRequestId());
+        assertEquals(firstRequest.getId(), nowItemByFirstRequest.getRequestId());
+
+        ItemDto nowItemBySecondRequest = itemService.updateItem(
+                new ItemDto("updatedName5", "updatedDesc5", true, null, null, secondRequest.getId()),
+                itemByFirstRequest.getId(), owner.getId()
+        );
+        assertNotNull(nowItemBySecondRequest.getRequestId());
+        assertEquals(secondRequest.getId(), nowItemBySecondRequest.getRequestId());
+    }
+
+    @Test
+    void deleteItemById() {
+        UserDto owner = userService.createUser(new UserDto("owner", "owner@mail.com"));
+        UserDto notOwner = userService.createUser(new UserDto("notOwner", "notOwner@mail.com"));
+        ItemDto item = itemService.createItem(
+                new ItemDto("item1", "desc1", true, null, null, null), owner.getId()
+        );
+
+        DataAccessException dataAccessException = assertThrows(DataAccessException.class,
+                () -> itemService.deleteItemById(item.getId(), notOwner.getId()));
+        assertEquals("Can not delete someone else's item", dataAccessException.getMessage());
     }
 
     @Test

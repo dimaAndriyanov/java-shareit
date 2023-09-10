@@ -48,11 +48,12 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto createItem(@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on posting item with\nname = {}\ndescription = {}\navailable = {}" +
+        log.info("Request on posting item with\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
+                itemDto.getRequestId(),
                 ownerId);
         validateItemForCreation(itemDto);
         return itemService.createItem(itemDto, ownerId);
@@ -62,12 +63,13 @@ public class ItemController {
     public ItemDto updateItemById(@RequestBody ItemDto itemDto,
                                   @PathVariable Long id,
                                   @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on patching item with\nid = {}\nname = {}\ndescription = {}\navailable = {}" +
+        log.info("Request on patching item with\nid = {}\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 id,
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
+                itemDto.getRequestId(),
                 ownerId);
         validateItemForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);

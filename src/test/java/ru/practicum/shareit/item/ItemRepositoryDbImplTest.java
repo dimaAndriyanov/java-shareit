@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.UserRepository;
 
 @SpringBootTest
@@ -11,9 +12,11 @@ class ItemRepositoryDbImplTest extends ItemRepositoryTest {
     @Autowired
     ItemRepositoryDbImplTest(
             @Qualifier("itemRepositoryDbImpl") ItemRepository itemRepository,
-            @Qualifier("userRepositoryDbImpl") UserRepository userRepository) {
+            @Qualifier("userRepositoryDbImpl") UserRepository userRepository,
+            ItemRequestRepository itemRequestRepository) {
         setItemRepository(itemRepository);
         setUserRepository(userRepository);
+        setItemRequestRepository(itemRequestRepository);
     }
 
     @Test
@@ -32,6 +35,12 @@ class ItemRepositoryDbImplTest extends ItemRepositoryTest {
     @Override
     void getAllByOwnerId() {
         super.getAllByOwnerId();
+    }
+
+    @Test
+    @Override
+    void getAllByOwnerIdPageable() {
+        super.getAllByOwnerIdPageable();
     }
 
     @Test
@@ -72,7 +81,25 @@ class ItemRepositoryDbImplTest extends ItemRepositoryTest {
 
     @Test
     @Override
+    void searchItemsPageable() {
+        super.searchItemsPageable();
+    }
+
+    @Test
+    @Override
     void checkForPresenceById() {
         super.checkForPresenceById();
+    }
+
+    @Test
+    @Override
+    void getAllItemsByRequestId() {
+        super.getAllItemsByRequestId();
+    }
+
+    @Test
+    @Override
+    void getAllItemsByRequestIds() {
+        super.getAllItemsByRequestIds();
     }
 }
