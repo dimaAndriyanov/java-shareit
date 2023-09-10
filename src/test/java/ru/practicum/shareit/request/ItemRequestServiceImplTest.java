@@ -83,7 +83,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void GetAllItemRequestsByUserIdPageable() {
+    void getAllItemRequestsByUserIdPageable() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto firstItemRequest = createItemRequest("firstDescription", creator.getId(), now.plusHours(1));
         ItemRequestDto secondItemRequest = createItemRequest("secondDescription", creator.getId(), now.plusHours(3));

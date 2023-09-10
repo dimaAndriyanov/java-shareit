@@ -37,6 +37,7 @@ abstract class ItemRepositoryTest {
     Item createOneItem(String name, String description, Boolean available, User owner) {
         return itemRepository.create(new Item(name, description, available, owner, null));
     }
+
     Item createOneItemWithRequest(String name, String description, User owner, ItemRequest request) {
         return itemRepository.create(new Item(name, description, true, owner, request));
     }

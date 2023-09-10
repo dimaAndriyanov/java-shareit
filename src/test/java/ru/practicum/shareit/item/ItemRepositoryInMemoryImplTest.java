@@ -38,7 +38,8 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
     }
 
     @Override
-    void getAllByOwnerIdPageable() {}
+    void getAllByOwnerIdPageable() {
+    }
 
     @Test
     @Override
@@ -77,7 +78,8 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
     }
 
     @Override
-    void searchItemsPageable() {}
+    void searchItemsPageable() {
+    }
 
     @Test
     @Override
@@ -86,8 +88,10 @@ class ItemRepositoryInMemoryImplTest extends ItemRepositoryTest {
     }
 
     @Override
-    void getAllItemsByRequestId() {}
+    void getAllItemsByRequestId() {
+    }
 
     @Override
-    void getAllItemsByRequestIds() {}
+    void getAllItemsByRequestIds() {
+    }
 }

@@ -46,7 +46,7 @@ public class ItemRepositoryDbImpl implements ItemRepository {
         if (ownerId == null) {
             throw new NullPointerException("Owner id must not be null");
         }
-        PageRequest page = PageRequest.of(from/size, size);
+        PageRequest page = PageRequest.of(from / size, size);
         return itemRepositoryDbInterface.findAllByOwnerId(ownerId, page).getContent();
     }
 
@@ -166,7 +166,7 @@ public class ItemRepositoryDbImpl implements ItemRepository {
                         entry.getValue().getDescription().contains(query))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        PageRequest page = PageRequest.of(from/size, size);
+        PageRequest page = PageRequest.of(from / size, size);
         return itemRepositoryDbInterface.findAllByIdIn(foundItemsIds, page).getContent();
     }
 

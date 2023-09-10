@@ -67,7 +67,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDto> getAllItemsByOwnerId(Long ownerId, Integer from , Integer size) {
+    public List<ItemDto> getAllItemsByOwnerId(Long ownerId, Integer from, Integer size) {
         userRepository.checkForPresenceById(ownerId);
         List<Item> foundItems = itemRepository.getAllByOwnerId(ownerId, from, size);
         List<Long> foundItemsIds = foundItems.stream().map(Item::getId).collect(Collectors.toList());

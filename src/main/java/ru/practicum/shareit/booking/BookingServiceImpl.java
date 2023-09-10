@@ -57,7 +57,7 @@ public class BookingServiceImpl implements BookingService {
         userRepository.checkForPresenceById(bookerId);
         BooleanExpression byBookerId = QBooking.booking.booker.id.eq(bookerId);
         BooleanExpression byBookerIdAndState = addBookingStateFilter(byBookerId, bookingState);
-        PageRequest page = PageRequest.of(from/size, size, Sort.by(Sort.Direction.DESC, "start"));
+        PageRequest page = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
         return toBookingDto(bookingRepository.findAll(byBookerIdAndState, page).getContent());
     }
 
@@ -69,7 +69,7 @@ public class BookingServiceImpl implements BookingService {
         userRepository.checkForPresenceById(ownerId);
         BooleanExpression byOwnerId = QBooking.booking.item.owner.id.eq(ownerId);
         BooleanExpression byOwnerIdAndState = addBookingStateFilter(byOwnerId, bookingState);
-        PageRequest page = PageRequest.of(from/size, size, Sort.by(Sort.Direction.DESC, "start"));
+        PageRequest page = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
         return toBookingDto(bookingRepository.findAll(byOwnerIdAndState, page).getContent());
     }
 

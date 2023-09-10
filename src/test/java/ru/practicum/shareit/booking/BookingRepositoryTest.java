@@ -133,7 +133,7 @@ class BookingRepositoryTest {
     void findAllByItemIdOrderByStart() {
         User owner = saveUser("userName", "userEmail");
         Item itemWithTwoBookings = saveItem("firstItemName", "firstItemDescription", owner);
-        Item itemWithOneBooking = saveItem("secondItemName", "secondItemDescription" , owner);
+        Item itemWithOneBooking = saveItem("secondItemName", "secondItemDescription", owner);
         Item itemWithoutBookings = saveItem("thirdItemName", "thirdItemDescription", owner);
         User booker = saveUser("bookerName", "bookerEmail");
         Booking firstBooking = saveBooking(now.plusHours(5), now.plusHours(6), booker, itemWithTwoBookings,

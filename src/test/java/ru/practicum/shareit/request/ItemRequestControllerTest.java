@@ -36,14 +36,14 @@ class ItemRequestControllerTest {
 
     private final MockMvc mvc;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private final static DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    private final ItemRequestDto itemRequest = new ItemRequestDto(
+    private final static ItemRequestDto itemRequest = new ItemRequestDto(
             "description",
             LocalDateTime.parse("2020-01-01T00:00:00", formatter)
     );
 
-    private final ItemDto item = new ItemDto(
+    private final static ItemDto item = new ItemDto(
             "name",
             "description",
             true,
@@ -52,7 +52,7 @@ class ItemRequestControllerTest {
             42L
     );
 
-    {
+    static {
         itemRequest.setId(42L);
         item.setId(15L);
         itemRequest.addItemDto(item);

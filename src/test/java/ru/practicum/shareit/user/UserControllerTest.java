@@ -30,12 +30,12 @@ class UserControllerTest {
 
     private final MockMvc mvc;
 
-    private final UserDto user = new UserDto(
+    private final static UserDto user = new UserDto(
             "name",
             "email@mail.com"
     );
 
-    {
+    static {
         user.setId(42L);
     }
 
