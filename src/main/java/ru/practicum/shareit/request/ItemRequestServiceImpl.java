@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -33,6 +34,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private final ItemRepository itemRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemRequestDto> getAllItemRequestsByCreatorId(Long creatorId) {
         userRepository.checkForPresenceById(creatorId);
         List<ItemRequestDto> foundItemRequests =
@@ -41,6 +43,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemRequestDto> getAllItemRequestsByUserId(Long userId, Integer from, Integer size) {
         userRepository.checkForPresenceById(userId);
         PageRequest page = PageRequest.of(from / size, size);
@@ -51,6 +54,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ItemRequestDto getItemRequestById(Long requestId, Long userId) {
         userRepository.checkForPresenceById(userId);
         Optional<ItemRequest> possibleItemRequest = itemRequestRepository.findById(requestId);
@@ -62,6 +66,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
+    @Transactional
     public ItemRequestDto createItemRequest(ItemRequestDto itemRequestDto, Long creatorId, LocalDateTime created) {
         userRepository.checkForPresenceById(creatorId);
         User creator = userRepository.getById(creatorId);

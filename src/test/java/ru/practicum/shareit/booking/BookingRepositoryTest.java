@@ -79,7 +79,7 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void save() {
+    void shouldBeManagedByEntityManagerWhenSave() {
         User owner = saveUser("ownerName", "ownerEmail");
         Item item = saveItem("itemName", "itemDescription", owner);
         User booker = saveUser("bookerName", "bookerEmail");
@@ -97,12 +97,11 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findByIdAndOwnerOrBookerId() {
+    void shouldReturnBookingWhenFindByIdAndOwnerOrBookerIdWithUserOwnerOfBookedItemOrBooker() {
         User owner = saveUser("ownerName", "ownerEmail");
         Item item = saveItem("itemName", "itemDescription", owner);
         User booker = saveUser("bookerName", "bookerEmail");
         User otherBooker = saveUser("otherBookerName", "otherBookerEmail");
-        User notBooker = saveUser("notBookerName", "notBookerEmail");
         Booking booking = saveBooking(now.plusHours(1), now.plusHours(2), booker, item, BookingStatus.WAITING);
         Booking otherBooking = saveBooking(now.plusDays(1), now.plusDays(2), otherBooker, item, BookingStatus.WAITING);
 
@@ -121,8 +120,19 @@ class BookingRepositoryTest {
         foundBooking = bookingRepository.findByIdAndOwnerOrBookerId(otherBooking.getId(), otherBooker.getId());
         assertTrue(foundBooking.isPresent());
         assertThat(foundBooking.get(), is(otherBooking));
+    }
 
-        foundBooking = bookingRepository.findByIdAndOwnerOrBookerId(booking.getId(), otherBooker.getId());
+    @Test
+    void shouldReturnEmptyWhenFindByIdAndOwnerOrBookerIdWithUserNotOwnerOfBookedItemNorBooker() {
+        User owner = saveUser("ownerName", "ownerEmail");
+        Item item = saveItem("itemName", "itemDescription", owner);
+        User booker = saveUser("bookerName", "bookerEmail");
+        User otherBooker = saveUser("otherBookerName", "otherBookerEmail");
+        User notBooker = saveUser("notBookerName", "notBookerEmail");
+        Booking booking = saveBooking(now.plusHours(1), now.plusHours(2), booker, item, BookingStatus.WAITING);
+
+        Optional<Booking> foundBooking =
+                bookingRepository.findByIdAndOwnerOrBookerId(booking.getId(), otherBooker.getId());
         assertTrue(foundBooking.isEmpty());
 
         foundBooking = bookingRepository.findByIdAndOwnerOrBookerId(booking.getId(), notBooker.getId());
@@ -130,7 +140,7 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findAllByItemIdOrderByStart() {
+    void shouldReturnListOfBookingsWhenFindAllByItemIdOrderByStart() {
         User owner = saveUser("userName", "userEmail");
         Item itemWithTwoBookings = saveItem("firstItemName", "firstItemDescription", owner);
         Item itemWithOneBooking = saveItem("secondItemName", "secondItemDescription", owner);
@@ -207,7 +217,7 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findAll() {
+    void shouldReturnListOfBookingsSortedByStartDescendingWhenFindAllWithDifferentFilters() {
         User owner = saveUser("ownerName", "ownerEmail");
         User otherOwner = saveUser("otherOwnerName", "otherOwnerEmail");
         User notOwner = saveUser("notOwnerName", "notOwnerEmail");

@@ -21,14 +21,16 @@ import static ru.practicum.shareit.request.ItemRequestValidator.*;
 public class ItemRequestController {
     private final ItemRequestService itemRequestService;
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     @GetMapping
-    public List<ItemRequestDto> getAllItemRequestsByCreatorId(@RequestHeader("X-Sharer-User-Id") Long creatorId) {
+    public List<ItemRequestDto> getAllItemRequestsByCreatorId(@RequestHeader(HEADER_USER_ID) Long creatorId) {
         log.info("Request on getting own item requests by user with id = {} has been received", creatorId);
         return itemRequestService.getAllItemRequestsByCreatorId(creatorId);
     }
 
     @GetMapping("/all")
-    public List<ItemRequestDto> getAllItemRequestsByUserId(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public List<ItemRequestDto> getAllItemRequestsByUserId(@RequestHeader(HEADER_USER_ID) Long userId,
                                                            @RequestParam(required = false) @PositiveOrZero Integer from,
                                                            @RequestParam(required = false) @Positive Integer size) {
         log.info("Request on getting all item requests by user with id = {} " +
@@ -38,7 +40,7 @@ public class ItemRequestController {
 
     @GetMapping("/{requestId}")
     public ItemRequestDto getItemRequestById(@PathVariable Long requestId,
-                                             @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                             @RequestHeader(HEADER_USER_ID) Long userId) {
         log.info("Request on getting item request with id = {} from user with id = {} has been received",
                 requestId, userId);
         return itemRequestService.getItemRequestById(requestId, userId);
@@ -46,7 +48,7 @@ public class ItemRequestController {
 
     @PostMapping
     public ItemRequestDto createItemRequest(@RequestBody ItemRequestDto itemRequestDto,
-                                            @RequestHeader("X-Sharer-User-Id") Long creatorId) {
+                                            @RequestHeader(HEADER_USER_ID) Long creatorId) {
         log.info("Request on posting item request with\ndescription = {}\nfrom user with id = {} has been received",
                 itemRequestDto.getDescription(), creatorId);
         validateItemRequestDto(itemRequestDto);

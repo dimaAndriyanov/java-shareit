@@ -52,6 +52,8 @@ class ItemRequestControllerTest {
             42L
     );
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     static {
         itemRequest.setId(42L);
         item.setId(15L);
@@ -59,12 +61,12 @@ class ItemRequestControllerTest {
     }
 
     @Test
-    void getAllItemRequestsByCreatorId() throws Exception {
+    void shouldReturnOkAndListOfItemRequestDtosWhenGetAllItemRequestsByCreatorId() throws Exception {
         when(itemRequestService.getAllItemRequestsByCreatorId(any()))
                 .thenReturn(List.of(itemRequest));
 
         mvc.perform(get("/requests")
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemRequest.getId()), Long.class))
@@ -84,26 +86,29 @@ class ItemRequestControllerTest {
     }
 
     @Test
-    void getAllItemRequestsByUserId() throws Exception {
-        when(itemRequestService.getAllItemRequestsByUserId(any(), any(), any()))
-                .thenReturn(List.of(itemRequest));
-
+    void shouldReturnBadRequestAndErrorWhenGetAllItemRequestsByUserIdWithIncorrectPageParameters() throws Exception {
         mvc.perform(get("/requests/all?from={from}&size={size}", -1, 10)
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getAllItemRequestsByUserId.from")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
 
         mvc.perform(get("/requests/all?from={from}&size={size}", 0, 0)
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getAllItemRequestsByUserId.size")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
+    }
+
+    @Test
+    void shouldReturnOkAndListOfItemRequestDtosWhenGetAllItemRequestsByUserId() throws Exception {
+        when(itemRequestService.getAllItemRequestsByUserId(any(), any(), any()))
+                .thenReturn(List.of(itemRequest));
 
         mvc.perform(get("/requests/all?from={from}&size={size}", 0, 10)
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemRequest.getId()), Long.class))
@@ -123,12 +128,12 @@ class ItemRequestControllerTest {
     }
 
     @Test
-    void getItemRequestById() throws Exception {
+    void shouldReturnOkAndItemRequestDtoWhenGetItemRequestById() throws Exception {
         when(itemRequestService.getItemRequestById(any(), any()))
                 .thenReturn(itemRequest);
 
         mvc.perform(get("/requests/{requestId}", 42)
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemRequest.getId()), Long.class))
@@ -148,7 +153,7 @@ class ItemRequestControllerTest {
     }
 
     @Test
-    void createItemRequest() throws Exception {
+    void shouldReturnOkAndItemRequestDtoWhenCreateItemRequest() throws Exception {
         when(itemRequestService.createItemRequest(any(), any(), any()))
                 .thenReturn(itemRequest);
 
@@ -156,7 +161,7 @@ class ItemRequestControllerTest {
                         .content(mapper.writeValueAsString(itemRequest))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 17)
+                        .header(HEADER_USER_ID, 17)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemRequest.getId()), Long.class))

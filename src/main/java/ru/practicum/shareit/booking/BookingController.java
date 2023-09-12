@@ -22,9 +22,11 @@ import static ru.practicum.shareit.booking.BookingValidator.*;
 public class BookingController {
     private final BookingService bookingService;
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     @GetMapping("/{id}")
     public SentBookingDto getBookingByIdAndUserId(@PathVariable Long id,
-                                                  @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                                  @RequestHeader(HEADER_USER_ID) Long userId) {
         log.info("Request on getting booking with id = {} by user with id = {} has been received", id, userId);
         return bookingService.getBookingByIdAndUserId(id, userId);
     }
@@ -32,7 +34,7 @@ public class BookingController {
     @GetMapping
     public List<SentBookingDto> getBookingsByStateAndBookerId(
             @RequestParam(defaultValue = "ALL") String state,
-            @RequestHeader("X-Sharer-User-Id") Long bookerId,
+            @RequestHeader(HEADER_USER_ID) Long bookerId,
             @RequestParam(required = false) @PositiveOrZero Integer from,
             @RequestParam(required = false) @Positive Integer size
     ) {
@@ -46,7 +48,7 @@ public class BookingController {
     @GetMapping("/owner")
     public List<SentBookingDto> getBookingsByStateAndOwnerId(
             @RequestParam(defaultValue = "ALL") String state,
-            @RequestHeader("X-Sharer-User-Id") Long ownerId,
+            @RequestHeader(HEADER_USER_ID) Long ownerId,
             @RequestParam(required = false) @PositiveOrZero Integer from,
             @RequestParam(required = false) @Positive Integer size
     ) {
@@ -60,7 +62,7 @@ public class BookingController {
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public SentBookingDto createBooking(@RequestBody ReceivedBookingDto bookingDto,
-                                        @RequestHeader("X-Sharer-User-Id") Long bookerId) {
+                                        @RequestHeader(HEADER_USER_ID) Long bookerId) {
         log.info("Request on posting booking with\nitemId = {}\nstartDate = {}\nendDate = {}\nhas been received",
                 bookingDto.getItemId(),
                 bookingDto.getStart(),
@@ -70,7 +72,7 @@ public class BookingController {
 
     @PatchMapping("/{id}")
     public SentBookingDto updateBookingStatus(@PathVariable Long id,
-                                              @RequestHeader("X-Sharer-User-Id") Long userId,
+                                              @RequestHeader(HEADER_USER_ID) Long userId,
                                               @RequestParam Boolean approved) {
         return bookingService.updateBookingStatus(id, userId, approved);
     }

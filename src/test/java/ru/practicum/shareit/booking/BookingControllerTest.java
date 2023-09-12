@@ -54,13 +54,15 @@ class BookingControllerTest {
             new ItemDtoForBooking(27L, "itemName")
     );
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     @Test
-    void getBookingByIdAndUserId() throws Exception {
+    void shouldReturnOkAndBookingDtoWhenGetBookingByIdAndUserId() throws Exception {
         when(bookingService.getBookingByIdAndUserId(any(), any()))
                 .thenReturn(sentBookingDto);
 
         mvc.perform(get("/bookings/{id}", 27)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(sentBookingDto.getId()), Long.class))
@@ -73,26 +75,32 @@ class BookingControllerTest {
     }
 
     @Test
-    void getBookingsByStateAndBookerId() throws Exception {
-        when(bookingService.getBookingsByStateAndBookerId(any(), any(), any(), any()))
-                .thenReturn(List.of(sentBookingDto));
-
+    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndBookerIdWithFromLessThanZero() throws Exception {
         mvc.perform(get("/bookings?state={state}&from={from}&size={size}", "ALL", -1, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndBookerId.from")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndBookerIdWithSizeLessThanOrEqualToZero() throws Exception {
         mvc.perform(get("/bookings?state={state}&from={from}&size={size}", "ALL", 0, 0)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndBookerId.size")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
+    }
+
+    @Test
+    void shouldReturnOkAndListOfBookingDtosWhenGetBookingsByStateAndBookerId() throws Exception {
+        when(bookingService.getBookingsByStateAndBookerId(any(), any(), any(), any()))
+                .thenReturn(List.of(sentBookingDto));
 
         mvc.perform(get("/bookings?state={state}&from={from}&size={size}", "ALL", 0, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(sentBookingDto.getId()), Long.class))
@@ -105,26 +113,32 @@ class BookingControllerTest {
     }
 
     @Test
-    void getBookingsByStateAndOwnerId() throws Exception {
-        when(bookingService.getBookingsByStateAndOwnerId(any(), any(), any(), any()))
-                .thenReturn(List.of(sentBookingDto));
-
+    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndOwnerIdWithFromLessThanZero() throws Exception {
         mvc.perform(get("/bookings/owner?state={state}&from={from}&size={size}", "ALL", -1, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndOwnerId.from")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndOwnerIdWithSizeLessThanOrEqualToZero() throws Exception {
         mvc.perform(get("/bookings/owner?state={state}&from={from}&size={size}", "ALL", 0, 0)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndOwnerId.size")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
+    }
+
+    @Test
+    void shouldReturnOkAndListOfBookingsWhenGetBookingsByStateAndOwnerId() throws Exception {
+        when(bookingService.getBookingsByStateAndOwnerId(any(), any(), any(), any()))
+                .thenReturn(List.of(sentBookingDto));
 
         mvc.perform(get("/bookings/owner?state={state}&from={from}&size={size}", "ALL", 0, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(sentBookingDto.getId()), Long.class))
@@ -137,7 +151,7 @@ class BookingControllerTest {
     }
 
     @Test
-    void createBooking() throws Exception {
+    void shouldReturnCreatedAndBookingDtoWheCreateBooking() throws Exception {
         when(bookingService.createBooking(any(), any(), any()))
                 .thenReturn(sentBookingDto);
 
@@ -145,7 +159,7 @@ class BookingControllerTest {
                         .content(mapper.writeValueAsString(receivedBookingDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id", is(sentBookingDto.getId()), Long.class))
@@ -158,12 +172,12 @@ class BookingControllerTest {
     }
 
     @Test
-    void updateBookingStatus() throws Exception {
+    void shouldReturnOkAndBookingWhenUpdateBookingStatus() throws Exception {
         when(bookingService.updateBookingStatus(any(), any(), any()))
                 .thenReturn(sentBookingDto);
 
         mvc.perform(patch("/bookings/{id}?approved={approved}", 27, true)
-                        .header("X-Sharer-User-Id", 42)
+                        .header(HEADER_USER_ID, 42)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(sentBookingDto.getId()), Long.class))

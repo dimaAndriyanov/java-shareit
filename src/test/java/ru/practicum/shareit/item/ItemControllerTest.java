@@ -53,6 +53,8 @@ class ItemControllerTest {
 
     private static final CommentDto comment = new CommentDto("text", "authorName", "2020-01-01T00:00:00");
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     static {
         item.setId(42L);
         itemWithComment.setId(49L);
@@ -61,7 +63,7 @@ class ItemControllerTest {
     }
 
     @Test
-    void getAllItems() throws Exception {
+    void shouldReturnOkAndListOfItemDtosWhenGetAllItems() throws Exception {
         when(itemService.getAllItems())
                 .thenReturn(List.of(item));
 
@@ -78,12 +80,12 @@ class ItemControllerTest {
     }
 
     @Test
-    void getItemById() throws Exception {
+    void shouldReturnOkAndItemDtoWithCommentsWhenGetItemById() throws Exception {
         when(itemService.getItemById(any(), any()))
                 .thenReturn(itemWithComment);
 
         mvc.perform(get("/items/{id}", 17)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemWithComment.getId()), Long.class))
@@ -100,26 +102,28 @@ class ItemControllerTest {
     }
 
     @Test
-    void getAllItemsByOwnerId() throws Exception {
-        when(itemService.getAllItemsByOwnerId(any(), any(), any()))
-                .thenReturn(List.of(itemWithComment));
-
+    void shouldReturnBadRequestAndErrorWhenGetAllItemsByOwnerIdWithWrongParametersFromOrSize() throws Exception {
         mvc.perform(get("/items?from={from}&size={size}", -1, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.from")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
 
         mvc.perform(get("/items?from={from}&size={size}", 0, 0)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.size")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
+    }
 
+    @Test
+    void shouldReturnOkAndListOfItemDtosWithCommentsWhenGetAllItemsByOwnerId() throws Exception {
+        when(itemService.getAllItemsByOwnerId(any(), any(), any()))
+                .thenReturn(List.of(itemWithComment));
         mvc.perform(get("/items?from={from}&size={size}", 0, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemWithComment.getId()), Long.class))
@@ -136,7 +140,7 @@ class ItemControllerTest {
     }
 
     @Test
-    void createItem() throws Exception {
+    void shouldReturnCreatedAndCreatedItemDtoWhenCreateItem() throws Exception {
         when(itemService.createItem(any(), any()))
                 .thenReturn(item);
 
@@ -144,7 +148,7 @@ class ItemControllerTest {
                         .content(mapper.writeValueAsString(item))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id", is(item.getId()), Long.class))
@@ -158,7 +162,7 @@ class ItemControllerTest {
     }
 
     @Test
-    void updateItemById() throws Exception {
+    void shouldReturnOkAndUpdatedItemDtoWhenUpdateItemById() throws Exception {
         when(itemService.updateItem(any(), any(), any()))
                 .thenReturn(item);
 
@@ -166,7 +170,7 @@ class ItemControllerTest {
                         .content(mapper.writeValueAsString(item))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(item.getId()), Long.class))
@@ -180,12 +184,12 @@ class ItemControllerTest {
     }
 
     @Test
-    void deleteItemById() throws Exception {
+    void shouldReturnOkDeletedItemDtoWhenDeleteItemById() throws Exception {
         when(itemService.deleteItemById(any(), any()))
                 .thenReturn(item);
 
         mvc.perform(delete("/items/{id}", 42)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(item.getId()), Long.class))
@@ -199,16 +203,13 @@ class ItemControllerTest {
     }
 
     @Test
-    void deleteAll() throws Exception {
+    void shouldReturnOkWhenDeleteAll() throws Exception {
         mvc.perform(delete("/items"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void searchItems() throws Exception {
-        when(itemService.searchItems(any(), any(), any()))
-                .thenReturn(List.of(item));
-
+    void shouldReturnBadRequestAndErrorWhenSearchItemsWithWrongParametersFromOrSize() throws Exception {
         mvc.perform(get("/items/search?text={text}&from={from}&size={size}", "text", -1, 10)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
@@ -220,6 +221,12 @@ class ItemControllerTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("searchItems.size")))
                 .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
+    }
+
+    @Test
+    void shouldReturnOkAndListOfItemDtosWhenSearchItems() throws Exception {
+        when(itemService.searchItems(any(), any(), any()))
+                .thenReturn(List.of(item));
 
         mvc.perform(get("/items/search?text={text}&from={from}&size={size}", "text", 0, 10)
                         .accept(MediaType.APPLICATION_JSON))
@@ -234,7 +241,7 @@ class ItemControllerTest {
     }
 
     @Test
-    void createComment() throws Exception {
+    void shouldReturnOkAndCreatedCommentWhenCreateComment() throws Exception {
         when(itemService.createComment(any(), any(), any(), any()))
                 .thenReturn(comment);
 
@@ -242,7 +249,7 @@ class ItemControllerTest {
                         .content(mapper.writeValueAsString(comment))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(comment.getId()), Long.class))

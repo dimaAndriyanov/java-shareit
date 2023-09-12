@@ -24,6 +24,8 @@ import static ru.practicum.shareit.item.CommentValidator.*;
 public class ItemController {
     private final ItemService itemService;
 
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
+
     @GetMapping("/all")
     public List<ItemDto> getAllItems() {
         log.info("Request on getting all items has been received");
@@ -31,13 +33,13 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemDto getItemById(@PathVariable Long id, @RequestHeader(HEADER_USER_ID) Long userId) {
         log.info("Request on getting item with id = {} by user with id = {} has been received", id, userId);
         return itemService.getItemById(id, userId);
     }
 
     @GetMapping
-    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader(HEADER_USER_ID) Long ownerId,
                                               @RequestParam(required = false) @PositiveOrZero Integer from,
                                               @RequestParam(required = false) @Positive Integer size) {
         log.info("Request on getting all items of user with id = {} " +
@@ -47,7 +49,7 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto createItem(@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+    public ItemDto createItem(@RequestBody ItemDto itemDto, @RequestHeader(HEADER_USER_ID) Long ownerId) {
         log.info("Request on posting item with\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 itemDto.getName(),
@@ -62,7 +64,7 @@ public class ItemController {
     @PatchMapping("/{id}")
     public ItemDto updateItemById(@RequestBody ItemDto itemDto,
                                   @PathVariable Long id,
-                                  @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+                                  @RequestHeader(HEADER_USER_ID) Long ownerId) {
         log.info("Request on patching item with\nid = {}\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 id,
@@ -76,7 +78,7 @@ public class ItemController {
     }
 
     @DeleteMapping("/{id}")
-    public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+    public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader(HEADER_USER_ID) Long ownerId) {
         log.info("Request on deleting item with id = {} by user with id = {} has been received", id, ownerId);
         return itemService.deleteItemById(id, ownerId);
     }
@@ -99,7 +101,7 @@ public class ItemController {
     @PostMapping("/{id}/comment")
     public CommentDto createComment(@RequestBody CommentDto commentDto,
                                     @PathVariable("id") Long itemId,
-                                    @RequestHeader("X-Sharer-User-Id") Long authorId) {
+                                    @RequestHeader(HEADER_USER_ID) Long authorId) {
         log.info("Request on posting comment with text = {}" +
                 "\non item with id = {}\nfrom user with id = {} has been received",
                 commentDto.getText(),

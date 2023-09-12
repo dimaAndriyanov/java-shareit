@@ -42,7 +42,7 @@ class ItemRepositoryDbInterfaceTest {
     }
 
     @Test
-    void save() {
+    void shouldBeManagedByEntityManagerWhenSave() {
         User owner = saveUser("ownerName", "ownerEmail");
         User requestCreator = saveUser("requestCreatorName", "requestCreatorName");
         ItemRequest itemRequest = saveItemRequest(requestCreator);
@@ -64,7 +64,7 @@ class ItemRepositoryDbInterfaceTest {
     }
 
     @Test
-    void findByIdWithOwner() {
+    void shouldReturnItemWithOwnerWhenFindByIdWithOwner() {
         User owner = saveUser("ownerName", "ownerEmail");
         Item item = saveItem(owner);
 

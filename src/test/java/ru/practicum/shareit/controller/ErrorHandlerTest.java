@@ -54,9 +54,11 @@ class ErrorHandlerTest {
     private final String start = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusHours(12).format(formatter);
 
     private final String end = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusDays(1).format(formatter);
+    
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
 
     @Test
-    void handleBodyValidationError() throws Exception {
+    void shouldReturnBadRequestAndErrorWhenHandleBodyValidationErrorWithCaughtFieldValidationException() throws Exception {
         when(userService.createUser(any()))
                 .thenThrow(new FieldValidationException(List.of(new FieldViolation("testFieldName", "testMessage"))));
 
@@ -71,9 +73,9 @@ class ErrorHandlerTest {
     }
 
     @Test
-    void handleVariablesValidationError() throws Exception {
+    void shouldReturnBadRequestAndErrorWhenHandleVariablesValidationErrorWithCaughtConstraintViolationException() throws Exception {
         mvc.perform(get("/items?from={from}&size={size}", -1, 10)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.from")))
@@ -81,7 +83,7 @@ class ErrorHandlerTest {
     }
 
     @Test
-    void handleBadRequestError() throws Exception {
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtHttpMessageNotReadableException() throws Exception {
         mvc.perform(post("/bookings")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
@@ -89,26 +91,38 @@ class ErrorHandlerTest {
                         "public ru.practicum.shareit.booking.dto.SentBookingDto " +
                         "ru.practicum.shareit.booking.BookingController." +
                         "createBooking(ru.practicum.shareit.booking.dto.ReceivedBookingDto,java.lang.Long)")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMethodArgumentTypeMismatchException() throws Exception {
         mvc.perform(get("/users/{userId}", "abc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("Failed to convert value of type 'java.lang.String' " +
                         "to required type 'java.lang.Long'; " +
                         "nested exception is java.lang.NumberFormatException: For input string: \"abc\"")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMissingRequestHeaderException() throws Exception {
         mvc.perform(get("/requests")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("Required request header 'X-Sharer-User-Id' " +
                         "for method parameter type Long is not present")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMissingServletRequestParameterException() throws Exception {
         mvc.perform(get("/items/search")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("Required request parameter 'text' " +
                         "for method parameter type String is not present")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtNotAvailableItemException() throws Exception {
         when(bookingService.createBooking(any(), any(),any()))
                 .thenThrow(new NotAvailableItemException("notAvailableItemException"));
 
@@ -116,29 +130,38 @@ class ErrorHandlerTest {
                         .content("{\"itemId\":1,\"start\":\"" + start + "\",\"end\":\"" + end + "\"}")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("notAvailableItemException")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtCanNotUpdateBookingStatusException() throws Exception {
         when(bookingService.updateBookingStatus(any(), any(), any()))
                 .thenThrow(new CanNotUpdateBookingStatusException("canNotUpdateBookingStatusException"));
 
         mvc.perform(patch("/bookings/17?approved=true")
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("canNotUpdateBookingStatusException")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtUnsupportedStateException() throws Exception {
         when(bookingService.getBookingsByStateAndBookerId(any(), any(), any(), any()))
                 .thenThrow(new UnsupportedStateException("unsupportedStateException"));
 
         mvc.perform(get("/bookings?state=ALL")
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("unsupportedStateException")));
+    }
 
+    @Test
+    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtPostingCommentWithoutCompletedBookingException() throws Exception {
         when(itemService.createComment(any(), any(), any(), any()))
                 .thenThrow(new PostingCommentWithoutCompletedBookingException(
                         "postingCommentWithoutCompletedBookingException"));
@@ -147,15 +170,14 @@ class ErrorHandlerTest {
                         .content("{\"text\":\"text\"}")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("postingCommentWithoutCompletedBookingException")));
-
     }
 
     @Test
-    void handleEmptyObjectError() throws Exception {
+    void shouldReturnBadRequestAndErrorWhenHandleEmptyObjectErrorWithCaughtEmptyObjectException() throws Exception {
         mvc.perform(patch("/users/17")
                         .content("{}")
                         .characterEncoding(StandardCharsets.UTF_8)
@@ -163,11 +185,10 @@ class ErrorHandlerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("Updated user must have at least one not null field")));
-
     }
 
     @Test
-    void handlePuttingConflictingDataError() throws Exception {
+    void shouldReturnConflictAndErrorWhenHandlePuttingConflictingDataErrorWithCaughtEmailIsAlreadyInUseException() throws Exception {
         when(userService.createUser(any()))
                 .thenThrow(new EmailIsAlreadyInUseException("emailIsAlreadyInUseException"));
 
@@ -178,7 +199,10 @@ class ErrorHandlerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(409))
                 .andExpect(jsonPath("$.error", is("emailIsAlreadyInUseException")));
+    }
 
+    @Test
+    void shouldReturnConflictAndErrorWhenHandlePuttingConflictingDataErrorWithCaughtBookingDatesIntersectWithAlreadyExistingBookingException() throws Exception {
         when(bookingService.createBooking(any(), any(),any()))
                 .thenThrow(new BookingDatesIntersectWithAlreadyExistingBookingException(
                         "bookingDatesIntersectWithAlreadyExistingBookingException"));
@@ -187,43 +211,43 @@ class ErrorHandlerTest {
                         .content("{\"itemId\":1,\"start\":\"" + start + "\",\"end\":\"" + end + "\"}")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(409))
                 .andExpect(jsonPath("$.error", is("bookingDatesIntersectWithAlreadyExistingBookingException")));
     }
 
     @Test
-    void handleObjectNotFoundError() throws Exception {
+    void shouldReturnNotFoundAndErrorWhenHandleObjectNotFoundErrorWithCaughtObjectNotFoundException() throws Exception {
         when(itemRequestService.getItemRequestById(any(), any()))
                 .thenThrow(new ObjectNotFoundException("objectNotFoundException"));
 
         mvc.perform(get("/requests/42")
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.error", is("objectNotFoundException")));
     }
 
     @Test
-    void handleDataAccessException() throws Exception {
+    void shouldReturnForbiddenWhenHandleDataAccessExceptionWithCaughtDataAccessException() throws Exception {
         when(itemService.deleteItemById(any(), any()))
                 .thenThrow(new DataAccessException("dataAccessException"));
 
         mvc.perform(delete("/items/42")
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403))
                 .andExpect(jsonPath("$.error", is("dataAccessException")));
     }
 
     @Test
-    void handleInternalServerError() throws Exception {
+    void shouldReturnInternalServerErrorAndErrorWhenHandleInternalServerErrorWithNullPointerException() throws Exception {
         when(itemRequestService.getItemRequestById(any(), any()))
                 .thenThrow(new NullPointerException("nullPointerException"));
 
         mvc.perform(get("/requests/42")
-                        .header("X-Sharer-User-Id", 23)
+                        .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.error", is("nullPointerException")));

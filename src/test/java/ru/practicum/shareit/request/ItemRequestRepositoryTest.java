@@ -28,7 +28,7 @@ class ItemRequestRepositoryTest {
     }
 
     @Test
-    void save() {
+    void shouldBeManagedByEntityManagerWhenSave() {
         User requestCreator = saveRequestCreator();
 
         ItemRequest itemRequest = new ItemRequest("description", now, requestCreator);

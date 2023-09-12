@@ -43,7 +43,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void getAllItemRequestsByCreatorId() {
+    void shouldReturnListOfItemRequestsSortedByCreatedDescendingWhenGetAllItemRequestsByCreatorId() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto itemRequestWithItem = createItemRequest("firstDescription", creator.getId(), now.minusHours(1));
         UserDto owner = createUser("ownerName", "owner@mail.com");
@@ -63,7 +63,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void getAllItemRequestsByUserId() {
+    void shouldReturnListOfItemRequestsSortedByCreatedDescendingWhenGetAllItemRequestsByUserId() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto itemRequestWithItem = createItemRequest("firstDescription", creator.getId(), now.plusHours(1));
         UserDto owner = createUser("ownerName", "owner@mail.com");
@@ -83,7 +83,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void getAllItemRequestsByUserIdPageable() {
+    void shouldReturnPageOfItemRequestsSortedByCreatedDescendingWhenGetAllItemRequestsByUserId() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto firstItemRequest = createItemRequest("firstDescription", creator.getId(), now.plusHours(1));
         ItemRequestDto secondItemRequest = createItemRequest("secondDescription", creator.getId(), now.plusHours(3));
@@ -110,7 +110,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void getItemRequestById() {
+    void shouldReturnItemRequestWhenGetItemRequestById() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto itemRequestWithItem = createItemRequest("firstDescription", creator.getId(), now.plusHours(1));
         UserDto owner = createUser("ownerName", "owner@mail.com");
@@ -138,7 +138,7 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void createItemRequest() {
+    void shouldReturnCreatedItemRequestWhenCreateItemRequest() {
         UserDto creator = createUser("creatorName", "creator@mail.com");
         ItemRequestDto createdItemRequest = createItemRequest("description", creator.getId(), now);
         assertThat(createdItemRequest.getId(), not(nullValue()));

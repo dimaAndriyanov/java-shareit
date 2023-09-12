@@ -64,7 +64,7 @@ class ItemRequestServiceImplUnitTest {
     }
 
     @Test
-    void getAllItemRequestsByCreatorId() {
+    void shouldThrowObjectNotFoundExceptionWhenGetAllItemRequestsByCreatorIdWhenCreatorNotFound() {
         ItemRequestService itemRequestService = getItemRequestService();
 
         doThrow(new ObjectNotFoundException("objectNotFoundException"))
@@ -72,6 +72,11 @@ class ItemRequestServiceImplUnitTest {
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> itemRequestService.getAllItemRequestsByCreatorId(9999L));
         assertThat(objectNotFoundException.getMessage(), is("objectNotFoundException"));
+    }
+
+    @Test
+    void shouldReturnListOfItemRequestsSortedByCreatedDescendingWhenGetAllItemRequestsByCreatorId() {
+        ItemRequestService itemRequestService = getItemRequestService();
 
         when(itemRequestRepository.findAllByCreatorIdOrderByCreatedDesc(17L))
                 .thenReturn(List.of());
@@ -114,7 +119,7 @@ class ItemRequestServiceImplUnitTest {
     }
 
     @Test
-    void getAllItemRequestsByUserId() {
+    void shouldThrowObjectNotFoundExceptionWhenGetAllItemRequestsByUserIdWhenUserNotFound() {
         ItemRequestService itemRequestService = getItemRequestService();
 
         doThrow(new ObjectNotFoundException("objectNotFoundException"))
@@ -122,6 +127,11 @@ class ItemRequestServiceImplUnitTest {
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> itemRequestService.getAllItemRequestsByUserId(9999L, 0, 10));
         assertThat(objectNotFoundException.getMessage(), is("objectNotFoundException"));
+    }
+
+    @Test
+    void shouldReturnListOfItemRequestsSortedByCreatedDescendingWhenGetAllItemRequestsByUserId() {
+        ItemRequestService itemRequestService = getItemRequestService();
 
         when(itemRequestRepository.findAllByCreatorIdNotOrderByCreatedDesc(17L, PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(List.of()));
@@ -166,7 +176,7 @@ class ItemRequestServiceImplUnitTest {
     }
 
     @Test
-    void getItemRequestById() {
+    void shouldThrowObjectNotFoundExceptionWhenGetItemRequestByIdWithUserNotFound() {
         ItemRequestService itemRequestService = getItemRequestService();
 
         doThrow(new ObjectNotFoundException("objectNotFoundException"))
@@ -174,12 +184,22 @@ class ItemRequestServiceImplUnitTest {
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> itemRequestService.getItemRequestById(1L, 9999L));
         assertThat(objectNotFoundException.getMessage(), is("objectNotFoundException"));
+    }
+
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenGetItemRequestByIdWithItemRequestNotFound() {
+        ItemRequestService itemRequestService = getItemRequestService();
 
         when(itemRequestRepository.findById(17L))
                 .thenReturn(Optional.empty());
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> itemRequestService.getItemRequestById(17L, 19L));
         assertThat(objectNotFoundException.getMessage(), is("Item request with id = 17 not found"));
+    }
+
+    @Test
+    void shouldReturnListOfItemRequestsWhenGetItemRequestById() {
+        ItemRequestService itemRequestService = getItemRequestService();
 
         User requestCreator = createUser("creatorName", "creatorEmail", 25L);
         ItemRequest itemRequestWithItem = createItemRequest("firstDescription", now.minusDays(3), requestCreator, 19L);
@@ -211,7 +231,7 @@ class ItemRequestServiceImplUnitTest {
     }
 
     @Test
-    void createItemRequest() {
+    void shouldThrowObjectNotFoundExceptionWhenCreateItemRequestWithUserNotFound() {
         ItemRequestService itemRequestService = getItemRequestService();
 
         doThrow(new ObjectNotFoundException("objectNotFoundException"))
@@ -219,6 +239,11 @@ class ItemRequestServiceImplUnitTest {
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> itemRequestService.createItemRequest(new ItemRequestDto("description", null), 9999L, now));
         assertThat(objectNotFoundException.getMessage(), is("objectNotFoundException"));
+    }
+
+    @Test
+    void shouldReturnCreatedItemRequestWhenCreateItemRequest() {
+        ItemRequestService itemRequestService = getItemRequestService();
 
         User requestCreator = createUser("creatorName", "creatorEmail", 25L);
         when(userRepository.getById(requestCreator.getId()))

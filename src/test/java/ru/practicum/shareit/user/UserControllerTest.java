@@ -40,7 +40,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getAllUsers() throws Exception {
+    void shouldReturnOkAndListOfUserDtosWhenGetAllUsers() throws Exception {
         when(userService.getAllUsers())
                 .thenReturn(List.of(user));
 
@@ -53,7 +53,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserById() throws Exception {
+    void shouldReturnOkAndUserDtoWhenGetUserById() throws Exception {
         when(userService.getUserById(any()))
                 .thenReturn(user);
 
@@ -66,7 +66,7 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser() throws Exception {
+    void shouldReturnCreatedAndUserDtoWhenCreateUser() throws Exception {
         when(userService.createUser(any()))
                 .thenReturn(user);
 
@@ -82,7 +82,7 @@ class UserControllerTest {
     }
 
     @Test
-    void updateUser() throws Exception {
+    void shouldReturnOkAndUserDtoWhenUpdateUser() throws Exception {
         when(userService.updateUser(any(), any()))
                 .thenReturn(user);
 
@@ -98,7 +98,7 @@ class UserControllerTest {
     }
 
     @Test
-    void deleteUser() throws Exception {
+    void shouldReturnOkAndUserDtoWhenDeleteUser() throws Exception {
         when(userService.deleteUserById(any()))
                 .thenReturn(user);
 
@@ -111,7 +111,7 @@ class UserControllerTest {
     }
 
     @Test
-    void deleteAllUsers() throws Exception {
+    void shouldReturnOkWhenDeleteAllUsers() throws Exception {
         mvc.perform(delete("/users"))
                 .andExpect(status().isOk());
     }

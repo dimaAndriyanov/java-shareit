@@ -40,7 +40,7 @@ class CommentRepositoryTest {
     }
 
     @Test
-    void save() {
+    void shouldBeManagedByEntityManagerWhenSave() {
         User owner = saveUser("ownerName", "ownerEmail");
         User commentAuthor = saveUser("authorName", "authorEmail");
         Item item = saveItem("itemName", "itemDescription", owner);
@@ -56,7 +56,7 @@ class CommentRepositoryTest {
     }
 
     @Test
-    void findAllByItemIdIn() {
+    void shouldReturnListOfCommentsWhenFindAllByItemIdIn() {
         User owner = saveUser("ownerName", "ownerEmail");
         User commentAuthor = saveUser("authorName", "authorEmail");
         Item itemWithTwoComments = saveItem("firstItemName", "firstItemDescription", owner);

@@ -15,7 +15,7 @@ class UserRepositoryDbInterfaceTest {
     private final UserRepositoryDbInterface userRepository;
 
     @Test
-    void save() {
+    void shouldBeManagedByEntityManagerWhenSave() {
         User user = new User("userName", "userEmail");
 
         assertThat(user.getId(), nullValue());
