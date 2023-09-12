@@ -54,7 +54,7 @@ class ErrorHandlerTest {
     private final String start = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusHours(12).format(formatter);
 
     private final String end = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusDays(1).format(formatter);
-    
+
     private static final String HEADER_USER_ID = "X-Sharer-User-Id";
 
     @Test
