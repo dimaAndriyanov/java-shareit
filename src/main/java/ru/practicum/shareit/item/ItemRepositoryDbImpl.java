@@ -2,6 +2,7 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.model.CataloguedItem;
@@ -41,6 +42,15 @@ public class ItemRepositoryDbImpl implements ItemRepository {
     }
 
     @Override
+    public List<Item> getAllByOwnerId(Long ownerId, Integer from, Integer size) {
+        if (ownerId == null) {
+            throw new NullPointerException("Owner id must not be null");
+        }
+        PageRequest page = PageRequest.of(from / size, size);
+        return itemRepositoryDbInterface.findAllByOwnerId(ownerId, page).getContent();
+    }
+
+    @Override
     public Item create(Item item) {
         if (item == null) {
             throw new NullPointerException("Can not create null item");
@@ -67,7 +77,8 @@ public class ItemRepositoryDbImpl implements ItemRepository {
                 item.getName() != null ? item.getName() : oldItem.getName(),
                 item.getDescription() != null ? item.getDescription() : oldItem.getDescription(),
                 item.getAvailable() != null ? item.getAvailable() : oldItem.getAvailable(),
-                oldItem.getOwner()
+                oldItem.getOwner(),
+                item.getItemRequest() != null ? item.getItemRequest() : oldItem.getItemRequest()
         );
         updatedItem.setId(id);
         Item result = itemRepositoryDbInterface.saveAndFlush(updatedItem);
@@ -146,7 +157,7 @@ public class ItemRepositoryDbImpl implements ItemRepository {
     }
 
     @Override
-    public List<Item> searchItems(String query) {
+    public List<Item> searchItems(String query, Integer from, Integer size) {
         if (query.isBlank()) {
             return List.of();
         }
@@ -155,7 +166,8 @@ public class ItemRepositoryDbImpl implements ItemRepository {
                         entry.getValue().getDescription().contains(query))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        return itemRepositoryDbInterface.findAllById(foundItemsIds);
+        PageRequest page = PageRequest.of(from / size, size);
+        return itemRepositoryDbInterface.findAllByIdIn(foundItemsIds, page).getContent();
     }
 
     @Override
@@ -166,6 +178,22 @@ public class ItemRepositoryDbImpl implements ItemRepository {
         if (itemRepositoryDbInterface.findById(id).isEmpty()) {
             throw new ObjectNotFoundException(String.format("Item with id = %s not found", id));
         }
+    }
+
+    @Override
+    public List<Item> getAllItemsByRequestId(Long requestId) {
+        if (requestId == null) {
+            throw new NullPointerException("Id must not be null");
+        }
+        return itemRepositoryDbInterface.findAllByItemRequestId(requestId);
+    }
+
+    @Override
+    public List<Item> getAllItemsByRequestIds(List<Long> requestIds) {
+        if (requestIds == null) {
+            throw new NullPointerException("Id list must not be null");
+        }
+        return itemRepositoryDbInterface.findAllByItemRequestIdIn(requestIds);
     }
 
     private boolean updateItemCatalogue(Item item) {

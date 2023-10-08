@@ -1,16 +1,20 @@
 package ru.practicum.shareit.booking;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.SentBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.QBooking;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.exception.BookingDatesIntersectWithAlreadyExistingBookingException;
-import ru.practicum.shareit.exception.CanNotUpdateBookingStatus;
+import ru.practicum.shareit.exception.CanNotUpdateBookingStatusException;
 import ru.practicum.shareit.exception.NotAvailableItemException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -21,8 +25,6 @@ import ru.practicum.shareit.user.model.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.BookingMapper.*;
 
@@ -49,18 +51,26 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SentBookingDto> getBookingsByStateAndBookerId(BookingState bookingState, Long bookerId) {
+    public List<SentBookingDto> getBookingsByStateAndBookerId(
+            BookingState bookingState, Long bookerId, Integer from, Integer size
+    ) {
         userRepository.checkForPresenceById(bookerId);
-        List<Booking> bookings = bookingRepository.findAllByBookerIdOrderByStart(bookerId);
-        return toBookingDto(bookings.stream().filter(getStateFilter(bookingState)).collect(Collectors.toList()));
+        BooleanExpression byBookerId = QBooking.booking.booker.id.eq(bookerId);
+        BooleanExpression byBookerIdAndState = addBookingStateFilter(byBookerId, bookingState);
+        PageRequest page = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
+        return toBookingDto(bookingRepository.findAll(byBookerIdAndState, page).getContent());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SentBookingDto> getBookingsByStateAndOwnerId(BookingState bookingState, Long ownerId) {
+    public List<SentBookingDto> getBookingsByStateAndOwnerId(
+            BookingState bookingState, Long ownerId, Integer from, Integer size
+    ) {
         userRepository.checkForPresenceById(ownerId);
-        List<Booking> bookings = bookingRepository.findAllByItemOwnerIdOrderByStart(ownerId);
-        return toBookingDto(bookings.stream().filter(getStateFilter(bookingState)).collect(Collectors.toList()));
+        BooleanExpression byOwnerId = QBooking.booking.item.owner.id.eq(ownerId);
+        BooleanExpression byOwnerIdAndState = addBookingStateFilter(byOwnerId, bookingState);
+        PageRequest page = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
+        return toBookingDto(bookingRepository.findAll(byOwnerIdAndState, page).getContent());
     }
 
     @Override
@@ -112,10 +122,10 @@ public class BookingServiceImpl implements BookingService {
             throw new ObjectNotFoundException("Can not update status of own booking");
         }
         if (!booking.get().getItem().getOwner().getId().equals(userId)) {
-            throw new CanNotUpdateBookingStatus("Can not update booking status if user is not item owner");
+            throw new CanNotUpdateBookingStatusException("Can not update booking status if user is not item owner");
         }
         if (booking.get().getStatus() == BookingStatus.APPROVED) {
-            throw new CanNotUpdateBookingStatus("Can not update status of already approved booking");
+            throw new CanNotUpdateBookingStatusException("Can not update status of already approved booking");
         }
         if (approved) {
             booking.get().setStatus(BookingStatus.APPROVED);
@@ -126,52 +136,28 @@ public class BookingServiceImpl implements BookingService {
         return toBookingDto(booking.get());
     }
 
-    private boolean filterAll(Booking booking) {
-        return true;
-    }
-
-    private boolean filterWaiting(Booking booking) {
-        return booking.getStatus() == BookingStatus.WAITING;
-    }
-
-    private boolean filterRejected(Booking booking) {
-        return booking.getStatus() == BookingStatus.REJECTED;
-    }
-
-    private boolean filterCurrent(Booking booking) {
-        LocalDateTime now = LocalDateTime.now();
-        return booking.getStart().isBefore(now) && now.isBefore(booking.getEnd());
-    }
-
-    private boolean filterPast(Booking booking) {
-        return booking.getEnd().isBefore(LocalDateTime.now());
-    }
-
-    private boolean filterFuture(Booking booking) {
-        return LocalDateTime.now().isBefore(booking.getStart());
-    }
-
-    private Predicate<Booking> getStateFilter(BookingState bookingState) {
-        Predicate<Booking> stateFilter = null;
+    private BooleanExpression addBookingStateFilter(BooleanExpression byUserId, BookingState bookingState) {
+        BooleanExpression result = byUserId;
         switch (bookingState) {
-            case ALL:
-                stateFilter = this::filterAll;
+            case ALL :
                 break;
-            case WAITING:
-                stateFilter = this::filterWaiting;
+            case WAITING :
+                result = result.and(QBooking.booking.status.eq(BookingStatus.WAITING));
                 break;
-            case REJECTED:
-                stateFilter = this::filterRejected;
+            case REJECTED :
+                result = result.and(QBooking.booking.status.eq(BookingStatus.REJECTED));
                 break;
-            case CURRENT:
-                stateFilter = this::filterCurrent;
+            case CURRENT :
+                result = result
+                        .and(QBooking.booking.start.before(LocalDateTime.now()))
+                        .and(QBooking.booking.end.after(LocalDateTime.now()));
                 break;
-            case PAST:
-                stateFilter = this::filterPast;
+            case PAST :
+                result = result.and(QBooking.booking.end.before(LocalDateTime.now()));
                 break;
-            case FUTURE:
-                stateFilter = this::filterFuture;
+            case FUTURE :
+                result = result.and(QBooking.booking.start.after(LocalDateTime.now()));
         }
-        return stateFilter;
+        return result;
     }
 }

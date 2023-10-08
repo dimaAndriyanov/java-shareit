@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BookingValidatorTest {
 
     @Test
-    void validateForCreation() {
+    void shouldThrowFieldValidationExceptionWhenValidateForCreationWithDifferentMisplacedParams() {
         ReceivedBookingDto bookingWithNullFields = new ReceivedBookingDto(null, null, null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> BookingValidator.validateForCreation(bookingWithNullFields));
@@ -44,7 +44,10 @@ class BookingValidatorTest {
                 Set.of(new FieldViolation("Booking.start", "must be in future"),
                         new FieldViolation("Booking.end", "must be in future"),
                         new FieldViolation("Booking.end", "must be after start")));
+    }
 
+    @Test
+    void shouldReturnListOfStartAndEndWhenValidateForCreationWithProperParams() {
         LocalDateTime now = LocalDateTime.now();
         String start = now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         String end = now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -59,11 +62,14 @@ class BookingValidatorTest {
     }
 
     @Test
-    void validateBookingState() {
+    void shouldThrowUnsupportedStateExceptionWhenValidateBookingStateWithUnsupportedState() {
         UnsupportedStateException unsupportedStateException = assertThrows(UnsupportedStateException.class,
                 () -> BookingValidator.validateBookingState("UNSUPPORTED_STATE"));
         assertEquals("Unknown state: UNSUPPORTED_STATE", unsupportedStateException.getMessage());
+    }
 
+    @Test
+    void shouldNotThrowUnsupportedStateExceptionWhenValidateBookingStateWithSupportedState() {
         assertDoesNotThrow(() -> BookingValidator.validateBookingState("CURRENT"));
     }
 }

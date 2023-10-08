@@ -8,7 +8,7 @@ import ru.practicum.shareit.booking.dto.SentBookingDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.exception.BookingDatesIntersectWithAlreadyExistingBookingException;
-import ru.practicum.shareit.exception.CanNotUpdateBookingStatus;
+import ru.practicum.shareit.exception.CanNotUpdateBookingStatusException;
 import ru.practicum.shareit.exception.NotAvailableItemException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.ItemService;
@@ -33,6 +33,8 @@ class BookingServiceImplTest {
     private final UserService userService;
     private final BookingService bookingService;
 
+    private final LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+
     @Autowired
     BookingServiceImplTest(ItemService itemService, UserService userService, BookingService bookingService) {
         this.itemService = itemService;
@@ -49,7 +51,7 @@ class BookingServiceImplTest {
     }
 
     ItemDto setItem(String name, String description, Boolean available, Long ownerId) {
-        return itemService.createItem(new ItemDto(name, description, available, null, null), ownerId);
+        return itemService.createItem(new ItemDto(name, description, available, null, null, null), ownerId);
     }
 
     SentBookingDto setBooking(Long itemId, Long userId, List<LocalDateTime> dates) {
@@ -57,8 +59,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getBookingByIdAndUserId() {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    void shouldThrowObjectNotFoundExceptionWhenGetBookingByIdAndUserIdWithNotFoundUser() {
         List<UserDto> users = setUsers();
         ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
         SentBookingDto booking =
@@ -67,14 +68,35 @@ class BookingServiceImplTest {
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> bookingService.getBookingByIdAndUserId(booking.getId(), 9999L));
         assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
+    }
 
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenGetBookingByIdAndUserIdWithNotFoundBooking() {
+        List<UserDto> users = setUsers();
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> bookingService.getBookingByIdAndUserId(9999L, users.get(0).getId()));
         assertEquals("Booking with id = 9999 not found", objectNotFoundException.getMessage());
+    }
 
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenGetBookingByIdAndUserIdWithUserNotBookerNorOwnerOfBookedItem() {
+        List<UserDto> users = setUsers();
+        ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking =
+                setBooking(item1.getId(), users.get(1).getId(), List.of(now.plusHours(1), now.plusDays(1)));
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> bookingService.getBookingByIdAndUserId(booking.getId(), users.get(2).getId()));
         assertEquals("Booking with id = " + booking.getId() + " not found", objectNotFoundException.getMessage());
+    }
+
+    @Test
+    void shouldReturnBookingWhenGetBookingByIdAndUserIdWithUserBookerOrOwnerOfBookedItem() {
+        List<UserDto> users = setUsers();
+        ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking =
+                setBooking(item1.getId(), users.get(1).getId(), List.of(now.plusHours(1), now.plusDays(1)));
 
         assertEquals(booking.getId(),
                 bookingService.getBookingByIdAndUserId(booking.getId(), users.get(0).getId()).getId());
@@ -83,8 +105,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getBookingsByStateAndBookerId() {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    void shouldReturnListOfBookingsSortedByStartDescendingWhenGetBookingsByStateAndBookerIdWithDifferentParams() {
         List<UserDto> users = setUsers();
         ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
         ItemDto item2 = setItem("name2", "descr2", true, users.get(0).getId());
@@ -99,37 +120,75 @@ class BookingServiceImplTest {
         booking3 = bookingService.updateBookingStatus(booking3.getId(), users.get(1).getId(), true);
 
         List<SentBookingDto> foundBookings =
-                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(0).getId());
+                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(0).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(2).getId(), 0, 10);
         assertEquals(2, foundBookings.size());
         assertEquals(Set.of(booking2.getId(), booking3.getId()),
                 foundBookings.stream().map(SentBookingDto::getId).collect(Collectors.toSet()));
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.REJECTED, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.REJECTED,
+                users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.PAST, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.PAST, users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.CURRENT, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.CURRENT, users.get(2).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking3.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.FUTURE, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndBookerId(BookingState.FUTURE, users.get(2).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
     }
 
     @Test
-    void getBookingsByStateAndOwnerId() {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    void shouldReturnPageOfBookingsWhenGetBookingsByStateAndBookerIdWithDifferentParamsOfPage() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking1 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.minusDays(2), now.minusDays(1)));
+        SentBookingDto booking2 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.minusHours(1), now.plusHours(1)));
+        SentBookingDto booking3 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.plusDays(1), now.plusDays(2)));
+
+        List<SentBookingDto> foundBookingsByPage = bookingService.getBookingsByStateAndBookerId(
+                BookingState.ALL, users.get(1).getId(), 0, 1
+        );
+        assertEquals(1, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndBookerId(
+                BookingState.ALL, users.get(1).getId(), 1, 2
+        );
+        assertEquals(2, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+        assertEquals(booking2, foundBookingsByPage.get(1));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndBookerId(
+                BookingState.ALL, users.get(1).getId(), 2, 3
+        );
+        assertEquals(3, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+        assertEquals(booking2, foundBookingsByPage.get(1));
+        assertEquals(booking1, foundBookingsByPage.get(2));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndBookerId(
+                BookingState.ALL, users.get(1).getId(), 3, 3
+        );
+        assertTrue(foundBookingsByPage.isEmpty());
+    }
+
+    @Test
+    void shouldReturnListOfBookingsSortedByStartDescendingWhenGetBookingsByStateAndOwnerIdWithDifferentParams() {
         List<UserDto> users = setUsers();
         ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
         ItemDto item2 = setItem("name2", "descr2", true, users.get(0).getId());
@@ -144,93 +203,199 @@ class BookingServiceImplTest {
         booking3 = bookingService.updateBookingStatus(booking3.getId(), users.get(1).getId(), true);
 
         List<SentBookingDto> foundBookings =
-                bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(0).getId());
+                bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(0).getId(), 0, 10);
         assertEquals(2, foundBookings.size());
         assertEquals(Set.of(booking1.getId(), booking2.getId()),
                 foundBookings.stream().map(SentBookingDto::getId).collect(Collectors.toSet()));
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.FUTURE, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.FUTURE, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.WAITING, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.WAITING, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking1.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.PAST, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.PAST, users.get(0).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking2.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.CURRENT, users.get(0).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.CURRENT, users.get(0).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(1).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(1).getId(), 0, 10);
         assertEquals(1, foundBookings.size());
         assertEquals(booking3.getId(), foundBookings.get(0).getId());
 
-        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(2).getId());
+        foundBookings = bookingService.getBookingsByStateAndOwnerId(BookingState.ALL, users.get(2).getId(), 0, 10);
         assertTrue(foundBookings.isEmpty());
     }
 
     @Test
-    void createBooking() {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    void shouldReturnPageOfBookingsWhenGetBookingsByStateAndOwnerIdWithDifferentParamsOfPage() {
         List<UserDto> users = setUsers();
-        ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
-        ItemDto item2 = setItem("name2", "descr2", false, users.get(0).getId());
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking1 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.minusDays(2), now.minusDays(1)));
+        SentBookingDto booking2 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.minusHours(1), now.plusHours(1)));
+        SentBookingDto booking3 =
+                setBooking(item.getId(), users.get(1).getId(), List.of(now.plusDays(1), now.plusDays(2)));
+
+        List<SentBookingDto> foundBookingsByPage = bookingService.getBookingsByStateAndOwnerId(
+                BookingState.ALL, users.get(0).getId(), 0, 1
+        );
+        assertEquals(1, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndOwnerId(
+                BookingState.ALL, users.get(0).getId(), 1, 2
+        );
+        assertEquals(2, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+        assertEquals(booking2, foundBookingsByPage.get(1));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndOwnerId(
+                BookingState.ALL, users.get(0).getId(), 2, 3
+        );
+        assertEquals(3, foundBookingsByPage.size());
+        assertEquals(booking3, foundBookingsByPage.get(0));
+        assertEquals(booking2, foundBookingsByPage.get(1));
+        assertEquals(booking1, foundBookingsByPage.get(2));
+
+        foundBookingsByPage = bookingService.getBookingsByStateAndOwnerId(
+                BookingState.ALL, users.get(0).getId(), 3, 3
+        );
+        assertTrue(foundBookingsByPage.isEmpty());
+    }
+
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenCreateBookingWithUserNotFound() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
 
         ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> bookingService.createBooking(item1.getId(), 9999L, List.of(now.plusHours(1), now.plusHours(2))));
+                () -> bookingService.createBooking(item.getId(), 9999L, List.of(now.plusHours(1), now.plusHours(2))));
         assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
+    }
 
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenCreateBookingWithItemNotFound() {
+        List<UserDto> users = setUsers();
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
                 () -> bookingService.createBooking(9999L, users.get(1).getId(),
                         List.of(now.plusHours(1), now.plusHours(2))));
         assertEquals("Item with id = 9999 not found", objectNotFoundException.getMessage());
+    }
 
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> bookingService.createBooking(item1.getId(), users.get(0).getId(),
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenCreateBookingWithTryingToBookOwnItem() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> bookingService.createBooking(item.getId(), users.get(0).getId(),
                         List.of(now.plusHours(1), now.plusHours(2))));
         assertEquals("Can not book own item", objectNotFoundException.getMessage());
+    }
+
+    @Test
+    void shouldThrowNotAvailableItemExceptionWhenCreateBookingWithTryingToBookNotAvailableItem() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name2", "descr2", false, users.get(0).getId());
 
         NotAvailableItemException notAvailableItemException = assertThrows(NotAvailableItemException.class,
-                () -> bookingService.createBooking(item2.getId(), users.get(1).getId(),
+                () -> bookingService.createBooking(item.getId(), users.get(1).getId(),
                         List.of(now.plusHours(1), now.plusHours(2))));
         assertEquals("Can not book not available item", notAvailableItemException.getMessage());
+    }
 
-        SentBookingDto successfulBooking = bookingService.createBooking(item1.getId(), users.get(1).getId(),
+    @Test
+    void shouldReturnCreatedBookingWhenCreateBooking() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+
+        SentBookingDto booking = bookingService.createBooking(item.getId(), users.get(1).getId(),
                 List.of(now.plusHours(1), now.plusDays(1)));
-        assertNotNull(successfulBooking.getId());
+        assertNotNull(booking.getId());
         assertEquals(
-                bookingService.getBookingsByStateAndBookerId(BookingState.ALL, users.get(1).getId()).get(0).getId(),
-                successfulBooking.getId());
-        assertNotNull(successfulBooking.getStatus());
-        assertEquals(BookingStatus.WAITING, successfulBooking.getStatus());
-        assertNotNull(successfulBooking.getItem());
-        assertNotNull(successfulBooking.getItem().getId());
-        assertEquals(item1.getId(), successfulBooking.getItem().getId());
-        assertNotNull(successfulBooking.getBooker());
-        assertNotNull(successfulBooking.getBooker().getId());
-        assertEquals(users.get(1).getId(), successfulBooking.getBooker().getId());
-        assertNotNull(successfulBooking.getStart());
-        assertEquals(now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), successfulBooking.getStart());
-        assertNotNull(successfulBooking.getEnd());
-        assertEquals(now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), successfulBooking.getEnd());
+                bookingService.getBookingsByStateAndBookerId(BookingState.ALL,
+                        users.get(1).getId(), 0, 10).get(0).getId(),
+                booking.getId());
+        assertNotNull(booking.getStatus());
+        assertEquals(BookingStatus.WAITING, booking.getStatus());
+        assertNotNull(booking.getItem());
+        assertNotNull(booking.getItem().getId());
+        assertEquals(item.getId(), booking.getItem().getId());
+        assertNotNull(booking.getBooker());
+        assertNotNull(booking.getBooker().getId());
+        assertEquals(users.get(1).getId(), booking.getBooker().getId());
+        assertNotNull(booking.getStart());
+        assertEquals(now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), booking.getStart());
+        assertNotNull(booking.getEnd());
+        assertEquals(now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), booking.getEnd());
 
-        successfulBooking = bookingService.updateBookingStatus(successfulBooking.getId(), users.get(0).getId(), true);
+        booking = bookingService.updateBookingStatus(booking.getId(), users.get(0).getId(), true);
         BookingDatesIntersectWithAlreadyExistingBookingException intersectingDatesException = assertThrows(
                 BookingDatesIntersectWithAlreadyExistingBookingException.class,
-                () -> bookingService.createBooking(item1.getId(), users.get(2).getId(),
+                () -> bookingService.createBooking(item.getId(), users.get(2).getId(),
                                 List.of(now.plusHours(1), now.plusDays(1)))
         );
-        assertEquals("Item with id = " + successfulBooking.getItem().getId() + " is already booked from " +
+        assertEquals("Item with id = " + booking.getItem().getId() + " is already booked from " +
                 now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", till " +
                 now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 intersectingDatesException.getMessage());
     }
 
     @Test
-    void updateBookingStatus() {
+    void shouldThrowObjectNotFoundExceptionWhenUpdateBookingStatusWithUserNotFound() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking = bookingService.createBooking(item.getId(), users.get(1).getId(),
+                List.of(now.plusHours(1), now.plusHours(2)));
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> bookingService.updateBookingStatus(booking.getId(), 9999L, true));
+        assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
+    }
+
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenUpdateBookingStatusWithBookingNotFound() {
+        List<UserDto> users = setUsers();
+
+        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> bookingService.updateBookingStatus(9999L, users.get(0).getId(), true));
+        assertEquals("Booking with id = 9999 not found", objectNotFoundException.getMessage());
+    }
+
+    @Test
+    void shouldThrowObjectNotFoundExceptionWhenUpdateBookingStatusWithWithTryingToUpdateOwnBooking() {
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking = bookingService.createBooking(item.getId(), users.get(1).getId(),
+                List.of(now.plusHours(1), now.plusHours(2)));
+
+        ObjectNotFoundException  objectNotFoundException = assertThrows(ObjectNotFoundException.class,
+                () -> bookingService.updateBookingStatus(booking.getId(), users.get(1).getId(), true));
+        assertEquals("Can not update status of own booking", objectNotFoundException.getMessage());
+    }
+
+    @Test
+    void shouldThrowCanNotUpdateBookingStatusExceptionWhenUpdateBookingStatusWithTryingToUpdateBookingOfNotUsersItem() {
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking = bookingService.createBooking(item.getId(), users.get(1).getId(),
+                List.of(now.plusHours(1), now.plusHours(2)));
+
+        CanNotUpdateBookingStatusException canNotUpdateBookingStatusException = assertThrows(CanNotUpdateBookingStatusException.class,
+                () -> bookingService.updateBookingStatus(booking.getId(), users.get(2).getId(), true));
+        assertEquals("Can not update booking status if user is not item owner", canNotUpdateBookingStatusException.getMessage());
+    }
+
+    @Test
+    void shouldReturnUpdatedBookingWhenUpdateBookingStatus() {
         LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
         List<UserDto> users = setUsers();
         ItemDto item1 = setItem("name1", "descr1", true, users.get(0).getId());
@@ -238,22 +403,6 @@ class BookingServiceImplTest {
                 List.of(now.plusHours(1), now.plusHours(2)));
         SentBookingDto booking2 = bookingService.createBooking(item1.getId(), users.get(2).getId(),
                 List.of(now.plusDays(1), now.plusDays(2)));
-
-        ObjectNotFoundException objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> bookingService.updateBookingStatus(booking1.getId(), 9999L, true));
-        assertEquals("User with id = 9999 not found", objectNotFoundException.getMessage());
-
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> bookingService.updateBookingStatus(9999L, users.get(0).getId(), true));
-        assertEquals("Booking with id = 9999 not found", objectNotFoundException.getMessage());
-
-        objectNotFoundException = assertThrows(ObjectNotFoundException.class,
-                () -> bookingService.updateBookingStatus(booking1.getId(), users.get(1).getId(), true));
-        assertEquals("Can not update status of own booking", objectNotFoundException.getMessage());
-
-        CanNotUpdateBookingStatus canNotUpdateBookingStatus = assertThrows(CanNotUpdateBookingStatus.class,
-                () -> bookingService.updateBookingStatus(booking1.getId(), users.get(2).getId(), true));
-        assertEquals("Can not update booking status if user is not item owner", canNotUpdateBookingStatus.getMessage());
 
         SentBookingDto rejectedBooking1 =
                 bookingService.updateBookingStatus(booking1.getId(), users.get(0).getId(), false);
@@ -289,8 +438,24 @@ class BookingServiceImplTest {
         assertNotNull(approvedBooking2.getEnd());
         assertEquals(now.plusDays(2).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), approvedBooking2.getEnd());
 
-        canNotUpdateBookingStatus = assertThrows(CanNotUpdateBookingStatus.class,
+        CanNotUpdateBookingStatusException canNotUpdateBookingStatusException = assertThrows(CanNotUpdateBookingStatusException.class,
                 () -> bookingService.updateBookingStatus(approvedBooking2.getId(), users.get(0).getId(), false));
-        assertEquals("Can not update status of already approved booking", canNotUpdateBookingStatus.getMessage());
+        assertEquals("Can not update status of already approved booking", canNotUpdateBookingStatusException.getMessage());
+    }
+
+    @Test
+    void shouldThrowCanNotUpdateBookingStatusExceptionWhenUpdateBookingStatusWithTryingToUpdateAlreadyApprovedBooking() {
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        List<UserDto> users = setUsers();
+        ItemDto item = setItem("name1", "descr1", true, users.get(0).getId());
+        SentBookingDto booking = bookingService.createBooking(item.getId(), users.get(2).getId(),
+                List.of(now.plusDays(1), now.plusDays(2)));
+
+        SentBookingDto approvedBooking =
+                bookingService.updateBookingStatus(booking.getId(), users.get(0).getId(), true);
+
+        CanNotUpdateBookingStatusException canNotUpdateBookingStatusException = assertThrows(CanNotUpdateBookingStatusException.class,
+                () -> bookingService.updateBookingStatus(approvedBooking.getId(), users.get(0).getId(), false));
+        assertEquals("Can not update status of already approved booking", canNotUpdateBookingStatusException.getMessage());
     }
 }

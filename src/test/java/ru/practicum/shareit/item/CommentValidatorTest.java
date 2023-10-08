@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommentValidatorTest {
 
     @Test
-    void validateCommentDto() {
+    void shouldThrowFieldValidationExceptionWhenValidateCommentDtoWithWrongFields() {
         CommentDto commentWithNullText = new CommentDto(null, null, null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> CommentValidator.validateCommentDto(commentWithNullText));

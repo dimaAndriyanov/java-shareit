@@ -5,6 +5,7 @@ import ru.practicum.shareit.booking.dto.BookingInfo;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoForBooking;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -18,7 +19,8 @@ public class ItemMapper {
                 item.getDescription(),
                 item.getAvailable(),
                 lastBooking,
-                nextBooking
+                nextBooking,
+                item.getItemRequest() == null ? null : item.getItemRequest().getId()
         );
         result.setId(item.getId());
         return result;
@@ -28,12 +30,13 @@ public class ItemMapper {
         return items.stream().map(item -> toItemDto(item, null, null)).collect(Collectors.toList());
     }
 
-    public Item toItem(ItemDto itemDto, User owner) {
+    public Item toItem(ItemDto itemDto, User owner, ItemRequest itemRequest) {
         Item result = new Item(
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
-                owner
+                owner,
+                itemRequest
         );
         result.setId(itemDto.getId());
         return result;

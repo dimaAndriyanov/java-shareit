@@ -30,10 +30,12 @@ public class Booking {
     private BookingStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booker_id")
     @ToString.Exclude
     private final User booker;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id")
     @ToString.Exclude
     private final Item item;
 

@@ -3,10 +3,13 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,8 +20,11 @@ import static ru.practicum.shareit.item.CommentValidator.*;
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class ItemController {
     private final ItemService itemService;
+
+    private static final String HEADER_USER_ID = "X-Sharer-User-Id";
 
     @GetMapping("/all")
     public List<ItemDto> getAllItems() {
@@ -27,25 +33,29 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemDto getItemById(@PathVariable Long id, @RequestHeader(HEADER_USER_ID) Long userId) {
         log.info("Request on getting item with id = {} by user with id = {} has been received", id, userId);
         return itemService.getItemById(id, userId);
     }
 
     @GetMapping
-    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on getting all items of user with id = {} has been received", ownerId);
-        return itemService.getAllItemsByOwnerId(ownerId);
+    public List<ItemDto> getAllItemsByOwnerId(@RequestHeader(HEADER_USER_ID) Long ownerId,
+                                              @RequestParam(required = false) @PositiveOrZero Integer from,
+                                              @RequestParam(required = false) @Positive Integer size) {
+        log.info("Request on getting all items of user with id = {} " +
+                "with page parameters from = {} and size = {} has been received", ownerId, from, size);
+        return itemService.getAllItemsByOwnerId(ownerId, from == null ? 0 : from, size == null ? 10 : size);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto createItem(@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on posting item with\nname = {}\ndescription = {}\navailable = {}" +
+    public ItemDto createItem(@RequestBody ItemDto itemDto, @RequestHeader(HEADER_USER_ID) Long ownerId) {
+        log.info("Request on posting item with\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
+                itemDto.getRequestId(),
                 ownerId);
         validateItemForCreation(itemDto);
         return itemService.createItem(itemDto, ownerId);
@@ -54,20 +64,21 @@ public class ItemController {
     @PatchMapping("/{id}")
     public ItemDto updateItemById(@RequestBody ItemDto itemDto,
                                   @PathVariable Long id,
-                                  @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        log.info("Request on patching item with\nid = {}\nname = {}\ndescription = {}\navailable = {}" +
+                                  @RequestHeader(HEADER_USER_ID) Long ownerId) {
+        log.info("Request on patching item with\nid = {}\nname = {}\ndescription = {}\navailable = {}\nrequestId = {}" +
                 "\nby user with id = {} has been received",
                 id,
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
+                itemDto.getRequestId(),
                 ownerId);
         validateItemForUpdating(itemDto);
         return itemService.updateItem(itemDto, id, ownerId);
     }
 
     @DeleteMapping("/{id}")
-    public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+    public ItemDto deleteItemById(@PathVariable Long id, @RequestHeader(HEADER_USER_ID) Long ownerId) {
         log.info("Request on deleting item with id = {} by user with id = {} has been received", id, ownerId);
         return itemService.deleteItemById(id, ownerId);
     }
@@ -79,15 +90,18 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam("text") String query) {
-        log.info("Request on getting items by searchQuery = \"{}\" has been received", query);
-        return itemService.searchItems(query.toLowerCase());
+    public List<ItemDto> searchItems(@RequestParam("text") String query,
+                                     @RequestParam(required = false) @PositiveOrZero Integer from,
+                                     @RequestParam(required = false) @Positive Integer size) {
+        log.info("Request on getting items by searchQuery = \"{}\" " +
+                "with page parameters from = {} and size = {} has been received", query, from, size);
+        return itemService.searchItems(query.toLowerCase(), from == null ? 0 : from, size == null ? 10 : size);
     }
 
     @PostMapping("/{id}/comment")
     public CommentDto createComment(@RequestBody CommentDto commentDto,
                                     @PathVariable("id") Long itemId,
-                                    @RequestHeader("X-Sharer-User-Id") Long authorId) {
+                                    @RequestHeader(HEADER_USER_ID) Long authorId) {
         log.info("Request on posting comment with text = {}" +
                 "\non item with id = {}\nfrom user with id = {} has been received",
                 commentDto.getText(),
