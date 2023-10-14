@@ -47,7 +47,7 @@ public class ItemRepositoryDbImpl implements ItemRepository {
             throw new NullPointerException("Owner id must not be null");
         }
         PageRequest page = PageRequest.of(from / size, size);
-        return itemRepositoryDbInterface.findAllByOwnerId(ownerId, page).getContent();
+        return itemRepositoryDbInterface.findAllByOwnerIdOrderById(ownerId, page).getContent();
     }
 
     @Override

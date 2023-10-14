@@ -42,10 +42,7 @@ public class ErrorHandler {
             MethodArgumentTypeMismatchException.class,
             MissingRequestHeaderException.class,
             MissingServletRequestParameterException.class,
-            NotAvailableItemException.class,
-            CanNotUpdateBookingStatusException.class,
-            UnsupportedStateException.class,
-            PostingCommentWithoutCompletedBookingException.class
+            UnsupportedStateException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestError(Throwable exception) {
@@ -57,28 +54,6 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleEmptyObjectError(EmptyObjectException exception) {
         log.warn("Bad request received. Received body has no filled fields\n{}", exception.getMessage());
-        return new ErrorResponse(exception.getMessage());
-    }
-
-    @ExceptionHandler ({EmailIsAlreadyInUseException.class, BookingDatesIntersectWithAlreadyExistingBookingException.class})
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handlePuttingConflictingDataError(Throwable exception) {
-        log.warn("Request on putting object conflicting with already existing objects has been received\n{}",
-                exception.getMessage());
-        return new ErrorResponse(exception.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleObjectNotFoundError(ObjectNotFoundException exception) {
-        log.warn("Requested object not found.\n{}", exception.getMessage());
-        return new ErrorResponse(exception.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleDataAccessException(DataAccessException exception) {
-        log.warn("Request on changing item not from owner has been received\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 

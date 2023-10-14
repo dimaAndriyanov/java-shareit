@@ -1,7 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.experimental.UtilityClass;
-import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.FieldValidationException;
@@ -14,7 +14,7 @@ import java.util.List;
 
 @UtilityClass
 public class BookingValidator {
-    public List<LocalDateTime> validateForCreation(ReceivedBookingDto bookingDto) {
+    public void validateForCreation(BookingDto bookingDto) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = LocalDateTime.now();
@@ -62,8 +62,6 @@ public class BookingValidator {
         if (!fieldViolations.isEmpty()) {
             throw new FieldValidationException(fieldViolations);
         }
-
-        return List.of(start, end);
     }
 
     public BookingState validateBookingState(String bookingState) {

@@ -33,11 +33,11 @@ public class ItemController {
 
     @GetMapping
     public List<ItemDto> getAllItemsByOwnerId(@RequestHeader(HEADER_USER_ID) Long ownerId,
-                                              @RequestParam(required = false) Integer from,
-                                              @RequestParam(required = false) Integer size) {
+                                              @RequestParam Integer from,
+                                              @RequestParam Integer size) {
         log.info("Request on getting all items of user with id = {} " +
                 "with page parameters from = {} and size = {} has been received", ownerId, from, size);
-        return itemService.getAllItemsByOwnerId(ownerId, from == null ? 0 : from, size == null ? 10 : size);
+        return itemService.getAllItemsByOwnerId(ownerId, from, size);
     }
 
     @PostMapping
@@ -82,11 +82,11 @@ public class ItemController {
 
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam("text") String query,
-                                     @RequestParam(required = false) Integer from,
-                                     @RequestParam(required = false) Integer size) {
+                                     @RequestParam Integer from,
+                                     @RequestParam Integer size) {
         log.info("Request on getting items by searchQuery = \"{}\" " +
                 "with page parameters from = {} and size = {} has been received", query, from, size);
-        return itemService.searchItems(query.toLowerCase(), from == null ? 0 : from, size == null ? 10 : size);
+        return itemService.searchItems(query.toLowerCase(), from, size);
     }
 
     @PostMapping("/{id}/comment")

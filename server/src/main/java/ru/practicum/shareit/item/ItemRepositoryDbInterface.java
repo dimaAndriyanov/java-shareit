@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface ItemRepositoryDbInterface extends JpaRepository<Item, Long> {
     List<Item> findAllByOwnerId(Long ownerId);
 
-    Page<Item> findAllByOwnerId(Long ownerId, Pageable page);
+    Page<Item> findAllByOwnerIdOrderById(Long ownerId, Pageable page);
 
     Page<Item> findAllByIdIn(Iterable<Long> ids, Pageable page);
 

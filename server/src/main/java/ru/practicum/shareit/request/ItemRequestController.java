@@ -26,11 +26,11 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestDto> getAllItemRequestsByUserId(@RequestHeader(HEADER_USER_ID) Long userId,
-                                                           @RequestParam(required = false) Integer from,
-                                                           @RequestParam(required = false) Integer size) {
+                                                           @RequestParam Integer from,
+                                                           @RequestParam Integer size) {
         log.info("Request on getting all item requests by user with id = {} " +
                 "with page parameters from = {} and size = {} has been received", userId, from, size);
-        return itemRequestService.getAllItemRequestsByUserId(userId, from == null ? 0 : from, size == null ? 10 : size);
+        return itemRequestService.getAllItemRequestsByUserId(userId, from, size);
     }
 
     @GetMapping("/{requestId}")

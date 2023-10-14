@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.client.BaseClient;
 
 import java.util.Map;
@@ -48,7 +48,7 @@ public class BookingClient extends BaseClient {
         return get("/owner?state={state}&from={from}&size={size}", ownerId, parameters);
     }
 
-    public ResponseEntity<Object> postBooking(ReceivedBookingDto bookingDto, long bookerId) {
+    public ResponseEntity<Object> postBooking(BookingDto bookingDto, long bookerId) {
         return post("", bookerId, bookingDto);
     }
 

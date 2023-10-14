@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -61,7 +61,7 @@ public class BookingController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Object> createBooking(@RequestBody ReceivedBookingDto bookingDto,
+    public ResponseEntity<Object> createBooking(@RequestBody BookingDto bookingDto,
                                         @RequestHeader(HEADER_USER_ID) Long bookerId) {
         log.info("Request on posting booking with\nitemId = {}\nstartDate = {}\nendDate = {}\nhas been received",
                 bookingDto.getItemId(),

@@ -10,53 +10,19 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.shareit.error.ErrorResponse;
-import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.*;
-
-//import javax.validation.ConstraintViolationException;
-import java.util.List;
-//import java.util.stream.Collectors;
 
 @RestControllerAdvice("ru.practicum.shareit")
 @Slf4j
 public class ErrorHandler {
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public List<FieldViolation> handleBodyValidationError(FieldValidationException exception) {
-        log.warn("Bad request received. Request body failed validation\n{}", exception.getFieldViolations());
-        return exception.getFieldViolations();
-    }
-
-//    @ExceptionHandler
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public List<FieldViolation> handleVariablesValidationError(ConstraintViolationException exception) {
-//        List<FieldViolation> fieldViolations = exception.getConstraintViolations().stream()
-//                .map(violation -> new FieldViolation(violation.getPropertyPath().toString(), violation.getMessage()))
-//                .collect(Collectors.toList());
-//        log.warn("Bad request received. Request variables failed validation\n{}", fieldViolations);
-//        return fieldViolations;
-//    }
-
     @ExceptionHandler({
-            HttpMessageNotReadableException.class,
-            MethodArgumentTypeMismatchException.class,
-            MissingRequestHeaderException.class,
-            MissingServletRequestParameterException.class,
             NotAvailableItemException.class,
             CanNotUpdateBookingStatusException.class,
-            UnsupportedStateException.class,
             PostingCommentWithoutCompletedBookingException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestError(Throwable exception) {
         log.warn("Bad request received.\n{}", exception.getMessage());
-        return new ErrorResponse(exception.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleEmptyObjectError(EmptyObjectException exception) {
-        log.warn("Bad request received. Received body has no filled fields\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
@@ -79,6 +45,18 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleDataAccessException(DataAccessException exception) {
         log.warn("Request on changing item not from owner has been received\n{}", exception.getMessage());
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class,
+            MissingRequestHeaderException.class,
+            MissingServletRequestParameterException.class,
+    })
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleBadRequestFromGateway(Throwable exception) {
+        log.error("Error on receiving request from gateway occurred.\n{}", exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }
 
