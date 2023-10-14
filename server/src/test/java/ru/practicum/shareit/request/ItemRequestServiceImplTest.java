@@ -14,6 +14,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -29,6 +30,7 @@ class ItemRequestServiceImplTest {
     private final ItemService itemService;
     private final UserService userService;
     private final LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     UserDto createUser(String name, String email) {
         return userService.createUser(new UserDto(name, email));
@@ -145,7 +147,7 @@ class ItemRequestServiceImplTest {
         assertThat(createdItemRequest.getDescription(), not(nullValue()));
         assertThat(createdItemRequest.getDescription(), is("description"));
         assertThat(createdItemRequest.getCreated(), not(nullValue()));
-        assertThat(createdItemRequest.getCreated(), is(now));
+        assertThat(createdItemRequest.getCreated(), is(now.format(formatter)));
         assertThat(createdItemRequest.getItems(), not(nullValue()));
         assertThat(createdItemRequest.getItems(), is(empty()));
     }

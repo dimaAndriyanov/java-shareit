@@ -1,7 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import org.junit.jupiter.api.Test;
-import ru.practicum.shareit.booking.dto.ReceivedBookingDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.FieldValidationException;
 import ru.practicum.shareit.exception.UnsupportedStateException;
@@ -9,7 +9,6 @@ import ru.practicum.shareit.exception.UnsupportedStateException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +17,7 @@ class BookingValidatorTest {
 
     @Test
     void shouldThrowFieldValidationExceptionWhenValidateForCreationWithDifferentMisplacedParams() {
-        ReceivedBookingDto bookingWithNullFields = new ReceivedBookingDto(null, null, null);
+        BookingDto bookingWithNullFields = new BookingDto(null, null, null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> BookingValidator.validateForCreation(bookingWithNullFields));
         assertEquals(3, fieldValidationException.getFieldViolations().size());
@@ -27,7 +26,7 @@ class BookingValidatorTest {
                         new FieldViolation("Booking.start", "must not be null"),
                         new FieldViolation("Booking.end", "must not be null")));
 
-        ReceivedBookingDto bookingWithWrongTimePattern = new ReceivedBookingDto(1L, "22.08.2025, 12:05:15", "now");
+        BookingDto bookingWithWrongTimePattern = new BookingDto(1L, "22.08.2025, 12:05:15", "now");
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> BookingValidator.validateForCreation(bookingWithWrongTimePattern));
         assertEquals(2, fieldValidationException.getFieldViolations().size());
@@ -35,8 +34,8 @@ class BookingValidatorTest {
                 Set.of(new FieldViolation("Booking.start", "must be of pattern yyyy-MM-ddThh:mm:ss"),
                         new FieldViolation("Booking.end", "must be of pattern yyyy-MM-ddThh:mm:ss")));
 
-        ReceivedBookingDto bookingWithEndBeforeStartAndStartInPast =
-                new ReceivedBookingDto(1L, "2000-01-01T12:00:00", "1995-01-01T12:00:00");
+        BookingDto bookingWithEndBeforeStartAndStartInPast =
+                new BookingDto(1L, "2000-01-01T12:00:00", "1995-01-01T12:00:00");
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> BookingValidator.validateForCreation(bookingWithEndBeforeStartAndStartInPast));
         assertEquals(3, fieldValidationException.getFieldViolations().size());
@@ -47,18 +46,13 @@ class BookingValidatorTest {
     }
 
     @Test
-    void shouldReturnListOfStartAndEndWhenValidateForCreationWithProperParams() {
+    void shouldNotThrowExceptionsWhenValidateForCreationWithProperParams() {
         LocalDateTime now = LocalDateTime.now();
         String start = now.plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         String end = now.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        ReceivedBookingDto properBooking = new ReceivedBookingDto(1L,start, end);
+        BookingDto properBooking = new BookingDto(1L,start, end);
 
-        List<LocalDateTime> dates = BookingValidator.validateForCreation(properBooking);
-        assertEquals(2, dates.size());
-        assertNotNull(dates.get(0));
-        assertNotNull(dates.get(1));
-        assertEquals(start, dates.get(0).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        assertEquals(end, dates.get(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        assertDoesNotThrow(() -> BookingValidator.validateForCreation(properBooking));
     }
 
     @Test

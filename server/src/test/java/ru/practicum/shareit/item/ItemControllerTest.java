@@ -102,23 +102,6 @@ class ItemControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestAndErrorWhenGetAllItemsByOwnerIdWithWrongParametersFromOrSize() throws Exception {
-        mvc.perform(get("/items?from={from}&size={size}", -1, 10)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-
-        mvc.perform(get("/items?from={from}&size={size}", 0, 0)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.size")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
-    }
-
-    @Test
     void shouldReturnOkAndListOfItemDtosWithCommentsWhenGetAllItemsByOwnerId() throws Exception {
         when(itemService.getAllItemsByOwnerId(any(), any(), any()))
                 .thenReturn(List.of(itemWithComment));
@@ -206,21 +189,6 @@ class ItemControllerTest {
     void shouldReturnOkWhenDeleteAll() throws Exception {
         mvc.perform(delete("/items"))
                 .andExpect(status().isOk());
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenSearchItemsWithWrongParametersFromOrSize() throws Exception {
-        mvc.perform(get("/items/search?text={text}&from={from}&size={size}", "text", -1, 10)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("searchItems.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-
-        mvc.perform(get("/items/search?text={text}&from={from}&size={size}", "text", 0, 0)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("searchItems.size")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
     }
 
     @Test

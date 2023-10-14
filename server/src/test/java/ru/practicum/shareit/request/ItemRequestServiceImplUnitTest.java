@@ -15,6 +15,7 @@ import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +39,8 @@ class ItemRequestServiceImplUnitTest {
     private ItemRepository itemRepository;
 
     private final LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     ItemRequestService getItemRequestService() {
         return new ItemRequestServiceImpl(
@@ -258,7 +261,7 @@ class ItemRequestServiceImplUnitTest {
                 new ItemRequestDto("description", null), requestCreator.getId(), now);
         assertThat(createdItemRequest.getId(), is(savedItemRequest.getId()));
         assertThat(createdItemRequest.getDescription(), is(savedItemRequest.getDescription()));
-        assertThat(createdItemRequest.getCreated(), is(savedItemRequest.getCreated()));
+        assertThat(createdItemRequest.getCreated(), is(savedItemRequest.getCreated().format(formatter)));
         assertThat(createdItemRequest.getItems(), is(empty()));
     }
 }

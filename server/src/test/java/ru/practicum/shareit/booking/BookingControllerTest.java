@@ -75,26 +75,6 @@ class BookingControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndBookerIdWithFromLessThanZero() throws Exception {
-        mvc.perform(get("/bookings?state={state}&from={from}&size={size}", "ALL", -1, 10)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndBookerId.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndBookerIdWithSizeLessThanOrEqualToZero() throws Exception {
-        mvc.perform(get("/bookings?state={state}&from={from}&size={size}", "ALL", 0, 0)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndBookerId.size")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
-    }
-
-    @Test
     void shouldReturnOkAndListOfBookingDtosWhenGetBookingsByStateAndBookerId() throws Exception {
         when(bookingService.getBookingsByStateAndBookerId(any(), any(), any(), any()))
                 .thenReturn(List.of(sentBookingDto));
@@ -110,26 +90,6 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$[0].booker.id", is(sentBookingDto.getBooker().getId()), Long.class))
                 .andExpect(jsonPath("$[0].item.id", is(sentBookingDto.getItem().getId()), Long.class))
                 .andExpect(jsonPath("$[0].item.name", is(sentBookingDto.getItem().getName())));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndOwnerIdWithFromLessThanZero() throws Exception {
-        mvc.perform(get("/bookings/owner?state={state}&from={from}&size={size}", "ALL", -1, 10)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndOwnerId.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenGetBookingsByStateAndOwnerIdWithSizeLessThanOrEqualToZero() throws Exception {
-        mvc.perform(get("/bookings/owner?state={state}&from={from}&size={size}", "ALL", 0, 0)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getBookingsByStateAndOwnerId.size")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
     }
 
     @Test

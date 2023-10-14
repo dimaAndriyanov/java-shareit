@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.BookingController;
 import ru.practicum.shareit.booking.BookingService;
-import ru.practicum.shareit.error.FieldViolation;
 import ru.practicum.shareit.exception.*;
 import ru.practicum.shareit.item.ItemController;
 import ru.practicum.shareit.item.ItemService;
@@ -22,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,70 +56,6 @@ class ErrorHandlerTest {
     private static final String HEADER_USER_ID = "X-Sharer-User-Id";
 
     @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBodyValidationErrorWithCaughtFieldValidationException() throws Exception {
-        when(userService.createUser(any()))
-                .thenThrow(new FieldValidationException(List.of(new FieldViolation("testFieldName", "testMessage"))));
-
-        mvc.perform(post("/users")
-                        .content("{\"name\":\"userName\",\"email\":\"email@mail.com\"}")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("testFieldName")))
-                .andExpect(jsonPath("$[0].message", is("testMessage")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleVariablesValidationErrorWithCaughtConstraintViolationException() throws Exception {
-        mvc.perform(get("/items?from={from}&size={size}", -1, 10)
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getAllItemsByOwnerId.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtHttpMessageNotReadableException() throws Exception {
-        mvc.perform(post("/bookings")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("Required request body is missing: " +
-                        "public ru.practicum.shareit.booking.dto.SentBookingDto " +
-                        "ru.practicum.shareit.booking.BookingController." +
-                        "createBooking(ru.practicum.shareit.booking.dto.ReceivedBookingDto,java.lang.Long)")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMethodArgumentTypeMismatchException() throws Exception {
-        mvc.perform(get("/users/{userId}", "abc")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("Failed to convert value of type 'java.lang.String' " +
-                        "to required type 'java.lang.Long'; " +
-                        "nested exception is java.lang.NumberFormatException: For input string: \"abc\"")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMissingRequestHeaderException() throws Exception {
-        mvc.perform(get("/requests")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("Required request header 'X-Sharer-User-Id' " +
-                        "for method parameter type Long is not present")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtMissingServletRequestParameterException() throws Exception {
-        mvc.perform(get("/items/search")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("Required request parameter 'text' " +
-                        "for method parameter type String is not present")));
-    }
-
-    @Test
     void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtNotAvailableItemException() throws Exception {
         when(bookingService.createBooking(any(), any(),any()))
                 .thenThrow(new NotAvailableItemException("notAvailableItemException"));
@@ -149,42 +83,19 @@ class ErrorHandlerTest {
     }
 
     @Test
-    void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtUnsupportedStateException() throws Exception {
-        when(bookingService.getBookingsByStateAndBookerId(any(), any(), any(), any()))
-                .thenThrow(new UnsupportedStateException("unsupportedStateException"));
-
-        mvc.perform(get("/bookings?state=ALL")
-                        .header(HEADER_USER_ID, 23)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("unsupportedStateException")));
-    }
-
-    @Test
     void shouldReturnBadRequestAndErrorWhenHandleBadRequestErrorWithCaughtPostingCommentWithoutCompletedBookingException() throws Exception {
         when(itemService.createComment(any(), any(), any(), any()))
                 .thenThrow(new PostingCommentWithoutCompletedBookingException(
                         "postingCommentWithoutCompletedBookingException"));
 
         mvc.perform(post("/items/17/comment")
-                        .content("{\"text\":\"text\"}")
+                        .content("{\"text\":\"text\",\"created\":\"2000-01-01T12:00:00\"}")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HEADER_USER_ID, 23)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.error", is("postingCommentWithoutCompletedBookingException")));
-    }
-
-    @Test
-    void shouldReturnBadRequestAndErrorWhenHandleEmptyObjectErrorWithCaughtEmptyObjectException() throws Exception {
-        mvc.perform(patch("/users/17")
-                        .content("{}")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.error", is("Updated user must have at least one not null field")));
     }
 
     @Test
@@ -239,6 +150,45 @@ class ErrorHandlerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403))
                 .andExpect(jsonPath("$.error", is("dataAccessException")));
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorAndErrorWhenHandleBadRequestErrorWithCaughtHttpMessageNotReadableException() throws Exception {
+        mvc.perform(post("/bookings")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.error", is("Required request body is missing: " +
+                        "public ru.practicum.shareit.booking.dto.SentBookingDto " +
+                        "ru.practicum.shareit.booking.BookingController." +
+                        "createBooking(ru.practicum.shareit.booking.dto.ReceivedBookingDto,java.lang.Long)")));
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorAndErrorWhenHandleBadRequestErrorWithCaughtMethodArgumentTypeMismatchException() throws Exception {
+        mvc.perform(get("/users/{userId}", "abc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.error", is("Failed to convert value of type 'java.lang.String' " +
+                        "to required type 'java.lang.Long'; " +
+                        "nested exception is java.lang.NumberFormatException: For input string: \"abc\"")));
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorAndErrorWhenHandleBadRequestErrorWithCaughtMissingRequestHeaderException() throws Exception {
+        mvc.perform(get("/requests")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.error", is("Required request header 'X-Sharer-User-Id' " +
+                        "for method parameter type Long is not present")));
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorAndErrorWhenHandleBadRequestErrorWithCaughtMissingServletRequestParameterException() throws Exception {
+        mvc.perform(get("/items/search")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.error", is("Required request parameter 'text' " +
+                        "for method parameter type String is not present")));
     }
 
     @Test

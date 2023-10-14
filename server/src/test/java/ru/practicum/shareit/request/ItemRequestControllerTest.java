@@ -13,8 +13,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,11 +34,9 @@ class ItemRequestControllerTest {
 
     private final MockMvc mvc;
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
     private static final ItemRequestDto itemRequest = new ItemRequestDto(
             "description",
-            LocalDateTime.parse("2020-01-01T00:00:00", formatter)
+            "2020-01-01T00:00:00"
     );
 
     private static final ItemDto item = new ItemDto(
@@ -71,7 +67,7 @@ class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemRequest.getId()), Long.class))
                 .andExpect(jsonPath("$[0].description", is(itemRequest.getDescription())))
-                .andExpect(jsonPath("$[0].created", is(itemRequest.getCreated().format(formatter))))
+                .andExpect(jsonPath("$[0].created", is(itemRequest.getCreated())))
                 .andExpect(jsonPath("$[0].items[0].id",
                         is(new ArrayList<>(itemRequest.getItems()).get(0).getId()), Long.class))
                 .andExpect(jsonPath("$[0].items[0].name",
@@ -86,23 +82,6 @@ class ItemRequestControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestAndErrorWhenGetAllItemRequestsByUserIdWithIncorrectPageParameters() throws Exception {
-        mvc.perform(get("/requests/all?from={from}&size={size}", -1, 10)
-                        .header(HEADER_USER_ID, 17)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getAllItemRequestsByUserId.from")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than or equal to 0")));
-
-        mvc.perform(get("/requests/all?from={from}&size={size}", 0, 0)
-                        .header(HEADER_USER_ID, 17)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$[0].fieldName", is("getAllItemRequestsByUserId.size")))
-                .andExpect(jsonPath("$[0].message", is("must be greater than 0")));
-    }
-
-    @Test
     void shouldReturnOkAndListOfItemRequestDtosWhenGetAllItemRequestsByUserId() throws Exception {
         when(itemRequestService.getAllItemRequestsByUserId(any(), any(), any()))
                 .thenReturn(List.of(itemRequest));
@@ -113,7 +92,7 @@ class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(itemRequest.getId()), Long.class))
                 .andExpect(jsonPath("$[0].description", is(itemRequest.getDescription())))
-                .andExpect(jsonPath("$[0].created", is(itemRequest.getCreated().format(formatter))))
+                .andExpect(jsonPath("$[0].created", is(itemRequest.getCreated())))
                 .andExpect(jsonPath("$[0].items[0].id",
                         is(new ArrayList<>(itemRequest.getItems()).get(0).getId()), Long.class))
                 .andExpect(jsonPath("$[0].items[0].name",
@@ -138,7 +117,7 @@ class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemRequest.getId()), Long.class))
                 .andExpect(jsonPath("$.description", is(itemRequest.getDescription())))
-                .andExpect(jsonPath("$.created", is(itemRequest.getCreated().format(formatter))))
+                .andExpect(jsonPath("$.created", is(itemRequest.getCreated())))
                 .andExpect(jsonPath("$.items[0].id",
                         is(new ArrayList<>(itemRequest.getItems()).get(0).getId()), Long.class))
                 .andExpect(jsonPath("$.items[0].name",
@@ -166,7 +145,7 @@ class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemRequest.getId()), Long.class))
                 .andExpect(jsonPath("$.description", is(itemRequest.getDescription())))
-                .andExpect(jsonPath("$.created", is(itemRequest.getCreated().format(formatter))))
+                .andExpect(jsonPath("$.created", is(itemRequest.getCreated())))
                 .andExpect(jsonPath("$.items[0].id",
                         is(new ArrayList<>(itemRequest.getItems()).get(0).getId()), Long.class))
                 .andExpect(jsonPath("$.items[0].name",

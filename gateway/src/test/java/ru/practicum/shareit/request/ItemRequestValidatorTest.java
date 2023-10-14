@@ -13,21 +13,21 @@ class ItemRequestValidatorTest {
 
     @Test
     void validateItemRequestDto() {
-        ItemRequestDto itemRequestWithNullDescription = new ItemRequestDto(null, null);
+        ItemRequestDto itemRequestWithNullDescription = new ItemRequestDto(null);
         FieldValidationException fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> ItemRequestValidator.validateItemRequestDto(itemRequestWithNullDescription));
         assertThat(fieldValidationException.getFieldViolations(), hasSize(1));
         assertThat(fieldValidationException.getFieldViolations(),
                 hasItem(new FieldViolation("ItemRequest.description", "must not be null")));
 
-        ItemRequestDto itemRequestWithEmptyDescription = new ItemRequestDto("  ", null);
+        ItemRequestDto itemRequestWithEmptyDescription = new ItemRequestDto("  ");
         fieldValidationException = assertThrows(FieldValidationException.class,
                 () -> ItemRequestValidator.validateItemRequestDto(itemRequestWithEmptyDescription));
         assertThat(fieldValidationException.getFieldViolations(), hasSize(1));
         assertThat(fieldValidationException.getFieldViolations(),
                 hasItem(new FieldViolation("ItemRequest.description", "must not be empty")));
 
-        ItemRequestDto properItemRequest = new ItemRequestDto("description", null);
+        ItemRequestDto properItemRequest = new ItemRequestDto("description");
         assertDoesNotThrow(() -> ItemRequestValidator.validateItemRequestDto(properItemRequest));
     }
 }
